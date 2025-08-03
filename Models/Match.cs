@@ -12,9 +12,9 @@ public class Match
 
     public string CourtName { get; set; }
 
-    public int Team1Points { get; set; }
+    public int? Team1Points { get; set; }
 
-    public int Team2Points { get; set; }
+    public int? Team2Points { get; set; }
 
     public void RecordResult(int team1Points, int team2Points)
     {

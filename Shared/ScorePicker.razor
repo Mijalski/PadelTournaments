@@ -1,0 +1,57 @@
+﻿@using BlazorBootstrap
+
+<Modal @ref="_modal" Title="Set score" IsVerticallyCentered="true" Size="ModalSize.Large">
+    <HeaderTemplate>
+        <strong>Set score</strong>
+        <span class="text-muted ms-2">@(_match?.CourtName)</span>
+    </HeaderTemplate>
+
+    <BodyTemplate>
+
+        <div class="score-grid">
+            @foreach (var v in Enumerable.Range(0, ToPoints + 1))
+            {
+                <Button Color="ButtonColor.Secondary" Class="w-100" Outline="true"
+                        @onclick="(() => Pick(v))">
+                    @v
+                </Button>
+            }
+        </div>
+    </BodyTemplate>
+</Modal>
+
+@code {
+    [Parameter] public int ToPoints { get; set; } = 21;
+
+    public sealed class ScorePickArgs
+    {
+        public required Match Match { get; init; }
+        public required int Team { get; init; }
+        public required int Selected { get; init; }
+    }
+
+    [Parameter] public EventCallback<ScorePickArgs> OnPick { get; set; }
+
+    private Modal _modal = default!;
+    private Match? _match;
+    private int _team;
+
+    public async Task ShowAsync(Match match, int team, int toPoints)
+    {
+        _match = match; _team = team; ToPoints = toPoints;
+        await _modal.ShowAsync();
+    }
+
+    public async Task Close() => await _modal.HideAsync();
+
+    private async Task Pick(int selected)
+    {
+        await OnPick.InvokeAsync(new ScorePickArgs
+        {
+            Match = _match!,
+            Team = _team,
+            Selected = Math.Clamp(selected, 0, ToPoints)
+        });
+        await Close();
+    }
+}

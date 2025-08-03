@@ -6,310 +6,326 @@
 <div class="bg-emoji-fixed" aria-hidden="true"></div>
 
 <div class="container py-4">
-    <div class="row g-4">
-    @if (!ShowMatches)
-    {
-        <div class="col-lg-6">
-            <Card Class="h-100 border-0 shadow-sm rounded-4 bg-primary-subtle">
-                <CardBody Class="text-center p-4">
-                    <CardTitle Class="mb-3 fw-semibold text-primary-emphasis">🏆 Tournament type</CardTitle>
+<div class="row g-4">
+@if (!ShowMatches)
+{
+    <div class="col-lg-6">
+        <Card Class="h-100 border-0 shadow-sm rounded-4 bg-primary-subtle">
+            <CardBody Class="text-center p-4">
+                <CardTitle Class="mb-3 fw-semibold text-primary-emphasis">🏆 Tournament type</CardTitle>
 
-                    <div class="d-inline-block text-start">
-                        <div class="form-check mb-2">
-                            <RadioInput Name="TournamentType" Label="Americano" @bind-Value="IsAmericano" />
-                        </div>
-                        <div class="form-check">
-                            <RadioInput Name="TournamentType" Label="Mexicano" @bind-Value="IsMexicano" />
-                        </div>
+                <div class="d-inline-block text-start">
+                    <div class="form-check mb-2">
+                        <RadioInput Name="TournamentType" Label="Americano" @bind-Value="IsAmericano" />
                     </div>
-                </CardBody>
-            </Card>
-        </div>
-
-        <!-- Result sorting -->
-        <div class="col-lg-6">
-            <Card Class="h-100 border-0 shadow-sm rounded-4 bg-info-subtle">
-                <CardBody Class="text-center p-4">
-                    <CardTitle Class="mb-3 fw-semibold text-info-emphasis">📊 Result sorting</CardTitle>
-
-                    <div class="d-inline-block text-start">
-                        <div class="form-check mb-2">
-                            <RadioInput Name="ResultSorting" Label="Points then wins" @bind-Value="IsPointsThenWins" />
-                        </div>
-                        <div class="form-check">
-                            <RadioInput Name="ResultSorting" Label="Wins then points" @bind-Value="IsWinsThenPoints" />
-                        </div>
+                    <div class="form-check">
+                        <RadioInput Name="TournamentType" Label="Mexicano" @bind-Value="IsMexicano" />
                     </div>
-                </CardBody>
-            </Card>
-        </div>
+                </div>
+            </CardBody>
+        </Card>
+    </div>
 
-        <div class="col-lg-6">
-            <Card Class="h-100 border-0 shadow-sm rounded-4 bg-warning-subtle">
-                <CardBody Class="text-center p-4">
-                    <CardTitle Class="mb-3 fw-semibold text-warning-emphasis">🎯 Scoring</CardTitle>
+    <!-- Result sorting -->
+    <div class="col-lg-6">
+        <Card Class="h-100 border-0 shadow-sm rounded-4 bg-info-subtle">
+            <CardBody Class="text-center p-4">
+                <CardTitle Class="mb-3 fw-semibold text-info-emphasis">📊 Result sorting</CardTitle>
 
-                    <div class="d-inline-block text-start" style="min-width:320px; max-width:460px;">
+                <div class="d-inline-block text-start">
+                    <div class="form-check mb-2">
+                        <RadioInput Name="ResultSorting" Label="Points then wins" @bind-Value="IsPointsThenWins" />
+                    </div>
+                    <div class="form-check">
+                        <RadioInput Name="ResultSorting" Label="Wins then points" @bind-Value="IsWinsThenPoints" />
+                    </div>
+                </div>
+            </CardBody>
+        </Card>
+    </div>
 
-                        <div class="form-check mb-2">
+    <div class="col-lg-6">
+        <Card Class="h-100 border-0 shadow-sm rounded-4 bg-warning-subtle">
+            <CardBody Class="text-center p-4">
+                <CardTitle Class="mb-3 fw-semibold text-warning-emphasis">🎯 Scoring</CardTitle>
+
+                <div class="d-inline-block text-start" style="min-width:320px; max-width:460px;">
+
+                    <div class="form-check mb-2">
+                        <RadioInput Name="ScoringMode"
+                                    Label="Play points or games"
+                                    @bind-Value="IsPlayPointsOrGames" />
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="form-check m-0">
                             <RadioInput Name="ScoringMode"
-                                        Label="Play points or games"
-                                        @bind-Value="IsPlayPointsOrGames" />
+                                        Label="Play to"
+                                        @bind-Value="IsPlayToPoints" />
                         </div>
 
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="form-check m-0">
-                                <RadioInput Name="ScoringMode"
-                                            Label="Play to"
-                                            @bind-Value="IsPlayToPoints" />
-                            </div>
-
-                            <InputNumber @bind-Value="Game.ToPoints"
-                                         class="form-control form-control-sm w-auto"
-                                         min="1" max="99"
-                                         disabled="@(!IsPlayToPoints)" />
-                            <span>points</span>
-                        </div>
+                        <InputNumber @bind-Value="Game.ToPoints"
+                                     class="form-control form-control-sm w-auto"
+                                     min="1" max="99"
+                                     disabled="@(!IsPlayToPoints)" />
+                        <span>points</span>
                     </div>
-                </CardBody>
-            </Card>
-        </div>
+                </div>
+            </CardBody>
+        </Card>
+    </div>
 
 
-        <div class="col-lg-6">
-            <Card Class="h-100 border-0 shadow-sm rounded-4 bg-success-subtle">
-                <CardBody Class="text-center p-4">
-                    <CardTitle Class="mb-3 fw-semibold text-success-emphasis">👥 Team format</CardTitle>
+    <div class="col-lg-6">
+        <Card Class="h-100 border-0 shadow-sm rounded-4 bg-success-subtle">
+            <CardBody Class="text-center p-4">
+                <CardTitle Class="mb-3 fw-semibold text-success-emphasis">👥 Team format</CardTitle>
 
-                    <div class="d-inline-block text-start">
-                        <div class="form-check mb-2">
-                            <RadioInput Name="TeamFormat" Label="Individually" @bind-Value="IsIndividual" />
-                        </div>
-                        <div class="form-check">
-                            <RadioInput Name="TeamFormat" Label="Team" @bind-Value="IsTeam" />
-                        </div>
+                <div class="d-inline-block text-start">
+                    <div class="form-check mb-2">
+                        <RadioInput Name="TeamFormat" Label="Individually" @bind-Value="IsIndividual" />
                     </div>
-                </CardBody>
-            </Card>
-        </div>
-
-        <div class="col-lg-6">
-            <Card Class="h-100 border-0 shadow-sm rounded-4 bg-light">
-                <CardBody Class="text-center p-4">
-                    <CardTitle class="mb-3 fw-semibold">🎾 Courts</CardTitle>
-
-                    <div class="d-flex justify-content-center">
-                        <div class="input-group mb-3" style="max-width: 480px;">
-                            <TextInput Placeholder="Court name"
-                                       @bind-Value="NewCourtName"
-                                       OnInput="@((ChangeEventArgs e) => NewCourtName = e?.Value?.ToString() )"
-                                       @onkeyup="@(e => OnEnterUp(e, AddCourt) )" />
-                            <Button Color="ButtonColor.Secondary" Class="px-4" @onclick="AddCourt">ADD</Button>
-                        </div>
+                    <div class="form-check">
+                        <RadioInput Name="TeamFormat" Label="Team" @bind-Value="IsTeam" />
                     </div>
+                </div>
+            </CardBody>
+        </Card>
+    </div>
 
-                    <ol class="list-unstyled mb-0 d-inline-block text-start w-100" style="max-width: 560px;">
-                        @foreach (var c in Game.Courts)
-                        {
-                            <li @key="c.Order" class="d-flex align-items-center py-2 border-bottom">
+    <div class="col-lg-6">
+        <Card Class="h-100 border-0 shadow-sm rounded-4 bg-light">
+            <CardBody Class="text-center p-4">
+                <CardTitle class="mb-3 fw-semibold">🎾 Courts</CardTitle>
 
-                                @if (c.IsEditing)
-                                {
-                                    <div class="flex-grow-1 me-3">
-                                        <TextInput Placeholder="Court name"
+                <div class="d-flex justify-content-center">
+                    <div class="input-group mb-3" style="max-width: 480px;">
+                        <TextInput Placeholder="Court name"
+                                   @bind-Value="NewCourtName"
+                                   OnInput="@((ChangeEventArgs e) => NewCourtName = e?.Value?.ToString() )"
+                                   @onkeyup="@(e => OnEnterUp(e, AddCourt) )" />
+                        <Button Color="ButtonColor.Secondary" Class="px-4" @onclick="AddCourt">ADD</Button>
+                    </div>
+                </div>
+
+                <ol class="list-unstyled mb-0 d-inline-block text-start w-100" style="max-width: 560px;">
+                    @foreach (var c in Game.Courts)
+                    {
+                        <li @key="c.Order" class="d-flex align-items-center py-2 border-bottom">
+
+                            @if (c.IsEditing)
+                            {
+                                <div class="flex-grow-1 me-3">
+                                    <TextInput Placeholder="Court name"
                                                @bind-Value="c.EditName"
                                                OnInput="@((ChangeEventArgs e) => c.EditName = e?.Value?.ToString())"
                                                @onkeyup="@(e => OnEnterUp(e, () => SaveCourt(c.Order)))"/>
-                                    </div>
+                                </div>
 
-                                    <Button Color="ButtonColor.Secondary" Class="me-2"
-                                            Title="Save" @onclick="@(() => SaveCourt(c.Order))">
-                                        <Icon Name="IconName.Check2" />
-                                    </Button>
-                                    <Button Color="ButtonColor.Link" Class="me-3"
-                                            Title="Cancel" @onclick="@(() => CancelEditCourt(c.Order))">
-                                        <Icon Name="IconName.XLg" />
-                                    </Button>
-                                }
-                                else
-                                {
-                                    <span class="me-2 fw-medium">@c.Order.</span>
-                                    <span class="flex-grow-1">@c.Name</span>
+                                <Button Color="ButtonColor.Secondary" Class="me-2"
+                                        Title="Save" @onclick="@(() => SaveCourt(c.Order))">
+                                    <Icon Name="IconName.Check2" />
+                                </Button>
+                                <Button Color="ButtonColor.Link" Class="me-3"
+                                        Title="Cancel" @onclick="@(() => CancelEditCourt(c.Order))">
+                                    <Icon Name="IconName.XLg" />
+                                </Button>
+                            }
+                            else
+                            {
+                                <span class="me-2 fw-medium">@c.Order.</span>
+                                <span class="flex-grow-1">@c.Name</span>
                                     
-                                    <Badge Color="BadgeColor.Primary" IndicatorType="BadgeIndicatorType.RoundedPill" Class="me-3">
-                                        PADEL
-                                    </Badge>
+                                <Badge Color="BadgeColor.Primary" IndicatorType="BadgeIndicatorType.RoundedPill" Class="me-3">
+                                    PADEL
+                                </Badge>
 
-                                    <Button Color="ButtonColor.Link" Class="me-2"
-                                            Title="Edit" @onclick="@(() => EditCourtByOrder(c.Order))">
-                                        <Icon Name="IconName.PencilSquare" />
-                                    </Button>
-                                }
-
-                                <Button Color="ButtonColor.Link" Class="text-danger p-0"
-                                        Title="Delete" @onclick="@(() => RemoveCourtByOrder(c.Order))">
-                                    <Icon Name="IconName.TrashFill" />
+                                <Button Color="ButtonColor.Link" Class="me-2"
+                                        Title="Edit" @onclick="@(() => EditCourtByOrder(c.Order))">
+                                    <Icon Name="IconName.PencilSquare" />
                                 </Button>
-                            </li>
-                        }
-                    </ol>
-                </CardBody>
-            </Card>
-        </div>
+                            }
 
-        <div class="col-lg-6">
-            <Card Class="h-100 border-0 shadow-sm rounded-4 bg-secondary-subtle">
-                <CardBody Class="text-center p-4">
-                    <CardTitle class="mb-3 fw-semibold text-secondary-emphasis">🧑‍🤝‍🧑 Players</CardTitle>
+                            <Button Color="ButtonColor.Link" Class="text-danger p-0"
+                                    Title="Delete" @onclick="@(() => RemoveCourtByOrder(c.Order))">
+                                <Icon Name="IconName.TrashFill" />
+                            </Button>
+                        </li>
+                    }
+                </ol>
+            </CardBody>
+        </Card>
+    </div>
 
-                    <div class="d-flex justify-content-center">
-                        <div class="input-group mb-3" style="max-width: 480px;">
-                            <TextInput Placeholder="Player name"
-                                       @bind-Value="NewPlayerName"
-                                       OnInput="@((ChangeEventArgs e) => NewPlayerName = e?.Value?.ToString() )"
-                                       @onkeyup="@(e => OnEnterUp(e, AddPlayer) )" />
-                            <Button Color="ButtonColor.Secondary" Class="px-4" @onclick="AddPlayer">ADD</Button>
-                        </div>
+    <div class="col-lg-6">
+        <Card Class="h-100 border-0 shadow-sm rounded-4 bg-secondary-subtle">
+            <CardBody Class="text-center p-4">
+                <CardTitle class="mb-3 fw-semibold text-secondary-emphasis">🧑‍🤝‍🧑 Players</CardTitle>
+
+                <div class="d-flex justify-content-center">
+                    <div class="input-group mb-3" style="max-width: 480px;">
+                        <TextInput Placeholder="Player name"
+                                   @bind-Value="NewPlayerName"
+                                   OnInput="@((ChangeEventArgs e) => NewPlayerName = e?.Value?.ToString() )"
+                                   @onkeyup="@(e => OnEnterUp(e, AddPlayer) )" />
+                        <Button Color="ButtonColor.Secondary" Class="px-4" @onclick="AddPlayer">ADD</Button>
                     </div>
+                </div>
 
-                    <ol class="list-unstyled mb-0 d-inline-block text-start w-100" style="max-width: 560px;">
-                        @foreach (var p in Game.Players)
-                        {
-                            <li @key="p.Name" class="d-flex align-items-center py-2 border-bottom">
-                                <span class="me-2 fw-medium">@p.Order.</span>
+                <ol class="list-unstyled mb-0 d-inline-block text-start w-100" style="max-width: 560px;">
+                    @foreach (var p in Game.Players)
+                    {
+                        <li @key="p.Name" class="d-flex align-items-center py-2 border-bottom">
+                            <span class="me-2 fw-medium">@p.Order.</span>
 
-                                @if (p.IsEditing)
-                                {
-                                    <div class="flex-grow-1 me-3">
-                                        <TextInput Placeholder="Player name"
-                                                   @bind-Value="p.EditName"
-                                                   OnInput="@((ChangeEventArgs e) => p.EditName = e?.Value?.ToString())"
-                                                   @onkeyup="@(e => OnEnterUp(e, () => SavePlayer(p.Name)))"/>
-                                    </div>
+                            @if (p.IsEditing)
+                            {
+                                <div class="flex-grow-1 me-3">
+                                    <TextInput Placeholder="Player name"
+                                               @bind-Value="p.EditName"
+                                               OnInput="@((ChangeEventArgs e) => p.EditName = e?.Value?.ToString())"
+                                               @onkeyup="@(e => OnEnterUp(e, () => SavePlayer(p.Name)))"/>
+                                </div>
 
-                                    <Button Color="ButtonColor.Secondary" Class="me-2"
-                                            Title="Save" @onclick="@(() => SavePlayer(p.Name))">
-                                        <Icon Name="IconName.Check2" />
-                                    </Button>
-                                    <Button Color="ButtonColor.Link" Class="me-3"
-                                            Title="Cancel" @onclick="@(() => CancelEditPlayer(p.Name))">
-                                        <Icon Name="IconName.XLg" />
-                                    </Button>
-                                }
-                                else
-                                {
-                                    <span class="flex-grow-1">@p.Name</span>
-
-                                    <Badge Color="BadgeColor.Secondary"
-                                           IndicatorType="BadgeIndicatorType.RoundedPill"
-                                           Class="me-3">
-                                        PLAYER
-                                    </Badge>
-
-                                    <Button Color="ButtonColor.Link" Class="me-2"
-                                            Title="Edit" @onclick="@(() => EditPlayer(p.Name))">
-                                        <Icon Name="IconName.PencilSquare" />
-                                    </Button>
-                                }
-
-                                <Button Color="ButtonColor.Link" Class="text-danger p-0"
-                                        Title="Delete" @onclick="@(() => RemovePlayerById(p.Name))">
-                                    <Icon Name="IconName.TrashFill" />
+                                <Button Color="ButtonColor.Secondary" Class="me-2"
+                                        Title="Save" @onclick="@(() => SavePlayer(p.Name))">
+                                    <Icon Name="IconName.Check2" />
                                 </Button>
-                            </li>
-                        }
-                    </ol>
-                </CardBody>
-            </Card>
+                                <Button Color="ButtonColor.Link" Class="me-3"
+                                        Title="Cancel" @onclick="@(() => CancelEditPlayer(p.Name))">
+                                    <Icon Name="IconName.XLg" />
+                                </Button>
+                            }
+                            else
+                            {
+                                <span class="flex-grow-1">@p.Name</span>
+
+                                <Badge Color="BadgeColor.Secondary"
+                                       IndicatorType="BadgeIndicatorType.RoundedPill"
+                                       Class="me-3">
+                                    PLAYER
+                                </Badge>
+
+                                <Button Color="ButtonColor.Link" Class="me-2"
+                                        Title="Edit" @onclick="@(() => EditPlayer(p.Name))">
+                                    <Icon Name="IconName.PencilSquare" />
+                                </Button>
+                            }
+
+                            <Button Color="ButtonColor.Link" Class="text-danger p-0"
+                                    Title="Delete" @onclick="@(() => RemovePlayerById(p.Name))">
+                                <Icon Name="IconName.TrashFill" />
+                            </Button>
+                        </li>
+                    }
+                </ol>
+            </CardBody>
+        </Card>
             
-        </div>
-        }
+    </div>
+}
 
-        @if (ShowMatches && Game.Matches.Any())
+@if (ShowMatches && Game.Matches.Any())
+{
+    <div class="row g-4">
+        @foreach (var m in Game.Matches)
         {
-            <div class="row g-4">
-                @foreach (var m in Game.Matches)
-                {
-                    <div class="col-lg-6">
-                        <div class="text-center fw-semibold fs-3 mb-2">@m.CourtName</div>
+            <div class="col-lg-6">
+                <div class="text-center fw-semibold fs-3 mb-2">@m.CourtName</div>
 
-                        <div class="court">
-                            <div class="court-grid">
-                                <!-- TOP LEFT -->
-                                <div class="grid-top-left">
-                                    @if (Game.TeamFormat == TeamFormat.Pairs)
-                                    {
-                                        <div class="pill pill-dark">@TeamText(m.Team1)</div>
-                                    }
-                                    else
-                                    {
-                                        var names1 = IndividualNames(m.Team1).ToArray();
-                                        <div class="pill pill-dark pill-sm">@names1[0]</div>
-                                    }
+                <div class="court">
+                    <div class="court-grid">
+                        <!-- TOP LEFT -->
+                        <div class="grid-top-left">
+                            @if (Game.TeamFormat == TeamFormat.Pairs)
+                            {
+                                <div class="pill pill-dark">@TeamText(m.Team1)</div>
+                            }
+                            else
+                            {
+                                var names1 = IndividualNames(m.Team1).ToArray();
+                                <div class="pill pill-dark pill-sm">@names1[0]</div>
+                            }
+                        </div>
+
+                        <!-- TOP RIGHT -->
+                        <div class="grid-top-right">
+                            @if (Game.TeamFormat == TeamFormat.Pairs)
+                            {
+                                <div class="pill pill-dark">@TeamText(m.Team2)</div>
+                            }
+                            else
+                            {
+                                var names2 = IndividualNames(m.Team2).ToArray();
+                                <div class="stack">
+                                    <div class="pill pill-dark pill-sm">@names2[0]</div>
                                 </div>
+                            }
+                        </div>
 
-                                <!-- TOP RIGHT -->
-                                <div class="grid-top-right">
-                                    @if (Game.TeamFormat == TeamFormat.Pairs)
-                                    {
-                                        <div class="pill pill-dark">@TeamText(m.Team2)</div>
-                                    }
-                                    else
-                                    {
-                                        var names2 = IndividualNames(m.Team2).ToArray();
-                                        <div class="stack">
-                                            <div class="pill pill-dark pill-sm">@names2[0]</div>
-                                        </div>
-                                    }
-                                </div>
+                        <!-- MID (SCORES) -->
+                        <div class="disc grid-mid-left"
+                             role="button" tabindex="0"
+                             title="Set score"
+                             @onclick="@(async () => await _scorePicker.ShowAsync(m, 1, Game.ToPoints))"
+                             @onkeyup="@(async e => { if (e.Key == "Enter") await _scorePicker.ShowAsync(m, 1, Game.ToPoints); })">
+                            @(m.Team1Points.HasValue ? m.Team1Points.Value.ToString() : "?")
+                        </div>
 
-                                <!-- MID (SCORES) -->
-                                <div class="disc grid-mid-left">@(m.Team1Points > 0 ? m.Team1Points.ToString() : "?")</div>
-                                <div class="disc grid-mid-right">@(m.Team2Points > 0 ? m.Team2Points.ToString() : "?")</div>
+                        <div class="disc grid-mid-right"
+                             role="button" tabindex="0"
+                             title="Set score"
+                             @onclick="@(async () => await _scorePicker.ShowAsync(m, 2, Game.ToPoints))"
+                             @onkeyup="@(async e => { if (e.Key == "Enter") await _scorePicker.ShowAsync(m, 2, Game.ToPoints); })">
+                            @(m.Team2Points.HasValue ? m.Team2Points.Value.ToString() : "?")
+                        </div>
 
-                                <!-- BOTTOM LEFT -->
+                        <!-- BOTTOM LEFT -->
                                 
-                                @if (Game.TeamFormat == TeamFormat.Individual)
-                                {
-                                    <div class="grid-bot-left">
-                                        @{
-                                            var names1 = IndividualNames(m.Team1).ToArray();
-                                            <div class="stack">
-                                                <div class="pill pill-dark pill-sm">@names1[0]</div>
-                                            </div>
-                                        }
-                                    </div>
-
-                                    <!-- BOTTOM RIGHT -->
-                                    <div class="grid-bot-right">
-                                        @{
-                                            var names2 = IndividualNames(m.Team2).ToArray();
-                                            <div class="stack">
-                                                <div class="pill pill-dark pill-sm">@names2[0]</div>
-                                            </div>
-                                        }
+                        @if (Game.TeamFormat == TeamFormat.Individual)
+                        {
+                            <div class="grid-bot-left">
+                                @{
+                                    var names1 = IndividualNames(m.Team1).ToArray();
+                                    <div class="stack">
+                                        <div class="pill pill-dark pill-sm">@names1[0]</div>
                                     </div>
                                 }
                             </div>
-                        </div>
+
+                            <!-- BOTTOM RIGHT -->
+                            <div class="grid-bot-right">
+                                @{
+                                    var names2 = IndividualNames(m.Team2).ToArray();
+                                    <div class="stack">
+                                        <div class="pill pill-dark pill-sm">@names2[0]</div>
+                                    </div>
+                                }
+                            </div>
+                        }
                     </div>
-                }
+                </div>
             </div>
         }
+    </div>
+}
 
         
-    <div class="text-center mt-4">
-            <Button Color="ButtonColor.Primary"
-                    Disabled="@(Game.Courts.Count == 0 || Game.Players.Count < 4)"
-                    @onclick="NextRound">
-                ▶ Next
-            </Button>
-        </div>
-    </div>
+<div class="text-center mt-4">
+    <Button Color="ButtonColor.Primary"
+            Disabled="@(Game.Courts.Count == 0 || Game.Players.Count < 4)"
+            @onclick="NextRound">
+        ▶ Next
+    </Button>
+</div>
 </div>
 
-@code {
+</div>
 
+<ScorePicker @ref="_scorePicker" OnPick="OnScorePicked" />
+
+@code {
+    private ScorePicker _scorePicker = default!;
     private Game Game { get; set; } = new();
 
     // Radio bindings (map bool <-> string for Blazor.Bootstrap RadioInput)
@@ -508,5 +524,24 @@
             1 => new[] { team[0].Name, "?" },
             _ => new[] { team[0].Name, team[1].Name }
         };
+    }
+
+    private void OnScorePicked(ScorePicker.ScorePickArgs e)
+    {
+        var max = Math.Max(0, Game.ToPoints);
+        var other = max - e.Selected;
+
+        if (e.Team == 1)
+        {
+            e.Match.Team1Points = e.Selected;
+            e.Match.Team2Points = other;
+        }
+        else
+        {
+            e.Match.Team2Points = e.Selected;
+            e.Match.Team1Points = other;
+        }
+
+        StateHasChanged();
     }
 }

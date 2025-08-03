@@ -26,7 +26,6 @@
     background: url('/padel.png') center/cover no-repeat; /* swap per court if needed */
     border-radius: 14px;
     overflow: hidden;
-    aspect-ratio: 3/2;
 }
 
 .court-grid {
@@ -117,4 +116,10 @@
     font-size: 26px;
     border: 2px solid rgba(0,0,0,.2);
     box-shadow: 0 4px 12px rgba(0,0,0,.25);
+}
+
+.score-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+    gap: 8px;
 }
