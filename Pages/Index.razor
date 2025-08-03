@@ -7,8 +7,8 @@
 
 <div class="container py-4">
     <div class="row g-4">
-
-        <!-- Tournament type -->
+    @if (!ShowMatches)
+    {
         <div class="col-lg-6">
             <Card Class="h-100 border-0 shadow-sm rounded-4 bg-primary-subtle">
                 <CardBody Class="text-center p-4">
@@ -182,9 +182,9 @@
                                 {
                                     <div class="flex-grow-1 me-3">
                                         <TextInput Placeholder="Player name"
-                                               @bind-Value="p.EditName"
-                                               OnInput="@((ChangeEventArgs e) => p.EditName = e?.Value?.ToString())"
-                                               @onkeyup="@(e => OnEnterUp(e, () => SavePlayer(p.Name)))"/>
+                                                   @bind-Value="p.EditName"
+                                                   OnInput="@((ChangeEventArgs e) => p.EditName = e?.Value?.ToString())"
+                                                   @onkeyup="@(e => OnEnterUp(e, () => SavePlayer(p.Name)))"/>
                                     </div>
 
                                     <Button Color="ButtonColor.Secondary" Class="me-2"
@@ -221,8 +221,90 @@
                     </ol>
                 </CardBody>
             </Card>
+            
         </div>
+        }
 
+        @if (ShowMatches && Game.Matches.Any())
+        {
+            <div class="row g-4">
+                @foreach (var m in Game.Matches)
+                {
+                    <div class="col-lg-6">
+                        <div class="text-center fw-semibold fs-3 mb-2">@m.CourtName</div>
+
+                        <div class="court">
+                            <div class="court-grid">
+                                <!-- TOP LEFT -->
+                                <div class="grid-top-left">
+                                    @if (Game.TeamFormat == TeamFormat.Pairs)
+                                    {
+                                        <div class="pill pill-dark">@TeamText(m.Team1)</div>
+                                    }
+                                    else
+                                    {
+                                        var names1 = IndividualNames(m.Team1).ToArray();
+                                        <div class="pill pill-dark pill-sm">@names1[0]</div>
+                                    }
+                                </div>
+
+                                <!-- TOP RIGHT -->
+                                <div class="grid-top-right">
+                                    @if (Game.TeamFormat == TeamFormat.Pairs)
+                                    {
+                                        <div class="pill pill-dark">@TeamText(m.Team2)</div>
+                                    }
+                                    else
+                                    {
+                                        var names2 = IndividualNames(m.Team2).ToArray();
+                                        <div class="stack">
+                                            <div class="pill pill-dark pill-sm">@names2[0]</div>
+                                        </div>
+                                    }
+                                </div>
+
+                                <!-- MID (SCORES) -->
+                                <div class="disc grid-mid-left">@(m.Team1Points > 0 ? m.Team1Points.ToString() : "?")</div>
+                                <div class="disc grid-mid-right">@(m.Team2Points > 0 ? m.Team2Points.ToString() : "?")</div>
+
+                                <!-- BOTTOM LEFT -->
+                                
+                                @if (Game.TeamFormat == TeamFormat.Individual)
+                                {
+                                    <div class="grid-bot-left">
+                                        @{
+                                            var names1 = IndividualNames(m.Team1).ToArray();
+                                            <div class="stack">
+                                                <div class="pill pill-dark pill-sm">@names1[0]</div>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <!-- BOTTOM RIGHT -->
+                                    <div class="grid-bot-right">
+                                        @{
+                                            var names2 = IndividualNames(m.Team2).ToArray();
+                                            <div class="stack">
+                                                <div class="pill pill-dark pill-sm">@names2[0]</div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        
+    <div class="text-center mt-4">
+            <Button Color="ButtonColor.Primary"
+                    Disabled="@(Game.Courts.Count == 0 || Game.Players.Count < 4)"
+                    @onclick="NextRound">
+                ▶ Next
+            </Button>
+        </div>
     </div>
 </div>
 
@@ -245,6 +327,8 @@
 
     private string? NewCourtName { get; set; }
     private string? NewPlayerName { get; set; }
+    
+    bool ShowMatches => Game.Matches.Any();
 
     protected override void OnInitialized()
     {
@@ -382,5 +466,47 @@
     void OnEnterUp(KeyboardEventArgs e, Action action)
     {
         if (e.Key == "Enter") action();
+    }
+
+    void NextRound()
+    {
+        Game.Matches.Clear();
+
+        var courts = Game.Courts;
+        var players = Game.Players.OrderBy(_ => Guid.NewGuid()).ToList();
+
+        var playerIndex = 0;
+        for (int i = 0; i < courts.Count && playerIndex + 3 < players.Count; i++)
+        {
+            var match = new Match
+            {
+                CourtName = courts[i].Name,
+                Team1 = [players[playerIndex++], players[playerIndex++]],
+                Team2 = [players[playerIndex++], players[playerIndex++]],
+            };
+            Game.Matches.Add(match);
+        }
+
+        Game.CurrentRound++;
+    }
+
+    string TeamText(List<Player> team)
+    {
+        return team.Count switch
+        {
+            0 => "?",
+            1 => team[0].Name,
+            _ => $"{team[0].Name} & {team[1].Name}"
+        };
+    }
+
+    IEnumerable<string> IndividualNames(List<Player> team)
+    {
+        return team.Count switch
+        {
+            0 => new[] { "?", "?" },
+            1 => new[] { team[0].Name, "?" },
+            _ => new[] { team[0].Name, team[1].Name }
+        };
     }
 }

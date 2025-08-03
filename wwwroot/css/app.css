@@ -20,3 +20,101 @@
     will-change: transform;
     backface-visibility: hidden;
 }
+
+.court {
+    position: relative;
+    background: url('/padel.png') center/cover no-repeat; /* swap per court if needed */
+    border-radius: 14px;
+    overflow: hidden;
+    aspect-ratio: 3/2;
+}
+
+.court-grid {
+    display: grid;
+    grid-template-rows: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
+    height: 100%;
+    padding: 18px 22px;
+}
+
+.grid-top-left {
+    grid-row: 1;
+    grid-column: 1;
+    align-self: self-end;
+    justify-self: center;
+}
+
+.grid-top-right {
+    grid-row: 1;
+    grid-column: 2;
+    align-self: self-end;
+    justify-self: center;
+}
+
+.grid-mid-left {
+    grid-row: 2;
+    grid-column: 1;
+    align-self: center;
+    justify-self: center;
+}
+
+.grid-mid-right {
+    grid-row: 2;
+    grid-column: 2;
+    align-self: center;
+    justify-self: center;
+}
+
+.grid-bot-left {
+    grid-row: 3;
+    grid-column: 1;
+    align-self: self-start;
+    justify-self: center;
+}
+
+.grid-bot-right {
+    grid-row: 3;
+    grid-column: 2;
+    align-self: self-start;
+    justify-self: center;
+}
+
+.stack {
+    display: grid;
+    gap: 6px;
+}
+
+.pill {
+    padding: 8px 20px;
+    border-radius: 999px;
+    font-weight: 600;
+    min-width: 140px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,.25);
+    margin: 6px 0;
+}
+
+.pill-dark {
+    color: #fff;
+    background: rgba(23,32,42,.9);
+}
+
+.pill-sm {
+    padding: 6px 14px;
+    min-width: 120px;
+}
+
+.disc {
+    width: 86px;
+    height: 86px;
+    border-radius: 50%;
+    background: #d9d9d9;
+    color: #2b2b2b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 26px;
+    border: 2px solid rgba(0,0,0,.2);
+    box-shadow: 0 4px 12px rgba(0,0,0,.25);
+}

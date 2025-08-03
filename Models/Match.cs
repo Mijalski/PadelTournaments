@@ -10,7 +10,7 @@ public class Match
 
     public List<Player> Team2 { get; set; } = new();
 
-    public int Court { get; set; }
+    public string CourtName { get; set; }
 
     public int Team1Points { get; set; }
 
