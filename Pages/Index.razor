@@ -239,7 +239,7 @@
                         <div class="grid-top-left">
                             @if (Game.TeamFormat == TeamFormat.Pairs)
                             {
-                                <div class="pill pill-dark">@TeamText(m.Team1)</div>
+                                <div class="pill pill-dark">@m.Team1.Single().Name</div>
                             }
                             else
                             {
@@ -252,7 +252,7 @@
                         <div class="grid-top-right">
                             @if (Game.TeamFormat == TeamFormat.Pairs)
                             {
-                                <div class="pill pill-dark">@TeamText(m.Team2)</div>
+                                <div class="pill pill-dark">@m.Team2.Single().Name</div>
                             }
                             else
                             {
@@ -266,7 +266,6 @@
                         <!-- MID (SCORES) -->
                         <div class="disc grid-mid-left"
                              role="button" tabindex="0"
-                             title="Set score"
                              @onclick="@(async () => await _scorePicker.ShowAsync(m, 1, Game.ToPoints))"
                              @onkeyup="@(async e => { if (e.Key == "Enter") await _scorePicker.ShowAsync(m, 1, Game.ToPoints); })">
                             @(m.Team1Points.HasValue ? m.Team1Points.Value.ToString() : "?")
@@ -274,7 +273,6 @@
 
                         <div class="disc grid-mid-right"
                              role="button" tabindex="0"
-                             title="Set score"
                              @onclick="@(async () => await _scorePicker.ShowAsync(m, 2, Game.ToPoints))"
                              @onkeyup="@(async e => { if (e.Key == "Enter") await _scorePicker.ShowAsync(m, 2, Game.ToPoints); })">
                             @(m.Team2Points.HasValue ? m.Team2Points.Value.ToString() : "?")
@@ -288,7 +286,7 @@
                                 @{
                                     var names1 = IndividualNames(m.Team1).ToArray();
                                     <div class="stack">
-                                        <div class="pill pill-dark pill-sm">@names1[0]</div>
+                                        <div class="pill pill-dark pill-sm">@names1[1]</div>
                                     </div>
                                 }
                             </div>
@@ -298,7 +296,7 @@
                                 @{
                                     var names2 = IndividualNames(m.Team2).ToArray();
                                     <div class="stack">
-                                        <div class="pill pill-dark pill-sm">@names2[0]</div>
+                                        <div class="pill pill-dark pill-sm">@names2[1]</div>
                                     </div>
                                 }
                             </div>
@@ -310,14 +308,19 @@
     </div>
 }
 
+        <div class="d-flex justify-content-center my-4 gap-2">
+            <Button Color="ButtonColor.Primary"
+                    Disabled="@(!CanGoNext)"
+                    @onclick="NextRound">
+                ▶ Next
+            </Button>
 
-    <div class="text-center my-4">
-        <Button Color="ButtonColor.Primary"
-                Disabled="@(!CanGoNext)"
-                @onclick="NextRound">
-            ▶ Next
-        </Button>
-    </div>
+            <Button Color="ButtonColor.Warning"
+                    Disabled="@(!CanGoFinal || !CanGoNext)"
+                    @onclick="FinalRound">
+                🏁 Final round
+            </Button>
+        </div>
 </div>
 
 </div>
@@ -350,7 +353,7 @@
     {
         base.OnInitialized();
         Game.Courts = [new Court("Court 1", 1), new Court("Court 2", 2)];
-        Game.Players = [new Player("Dominik P", 1), new Player("Hajzen", 1), new Player("Hubert", 1), new Player("Pan Krzysztof", 1),];
+        Game.Players = [new Player("Dominik P", 1), new Player("Hajzen", 2), new Player("Hubert", 3), new Player("Pan Krzysztof", 4),];
     }
 
     void AddCourt()
@@ -504,25 +507,37 @@
 
     void GenerateNextRoundMatches()
     {
-        var shuffled = Game.Players.OrderBy(_ => Guid.NewGuid()).ToList();
-        var i = 0;
+        Game.Matches.Clear();
+
+        // Shuffle (replace with Americano/Mexicano pairing later)
+        var pool = Game.Players.OrderBy(_ => Guid.NewGuid()).ToList();
+        int p = 0;
 
         foreach (var court in Game.Courts)
         {
-            if (i >= shuffled.Count) break;
+            var m = new Match
+            {
+                Round = Game.CurrentRound,
+                CourtName = court.Name
+            };
 
-            var m = new Match { Round = Game.CurrentRound, CourtName = court.Name };
+            if (Game.TeamFormat == TeamFormat.Pairs)
+            {
+                if (p + 1 >= pool.Count) break;
 
-            // Team1 (treat player1 as a team if needed)
-            m.Team1.Add(shuffled[i++]);
-            if (Game.TeamFormat == TeamFormat.Pairs && i < shuffled.Count) m.Team1.Add(shuffled[i++]);
+                m.Team1.Add(pool[p++]); // one player
+                m.Team2.Add(pool[p++]); // one player
+            }
+            else
+            {
+                if (p + 3 >= pool.Count) break;
 
-            // Team2
-            if (i < shuffled.Count) m.Team2.Add(shuffled[i++]);
-            if (Game.TeamFormat == TeamFormat.Pairs && i < shuffled.Count) m.Team2.Add(shuffled[i++]);
+                m.Team1.Add(pool[p++]);
+                m.Team1.Add(pool[p++]);
 
-            // If we couldn't form at least 1v1, stop
-            if (m.Team2.Count == 0) break;
+                m.Team2.Add(pool[p++]);
+                m.Team2.Add(pool[p++]);
+            }
 
             Game.Matches.Add(m);
         }
@@ -549,16 +564,6 @@
 
         // Optional: persist/clear the on-screen matches after commit
         Game.Matches.Clear();
-    }
-
-    string TeamText(List<Player> team)
-    {
-        return team.Count switch
-        {
-            0 => "?",
-            1 => team[0].Name,
-            _ => $"{team[0].Name} & {team[1].Name}"
-        };
     }
 
     IEnumerable<string> IndividualNames(List<Player> team)
@@ -590,11 +595,100 @@
         StateHasChanged();
     }
 
-    bool CanGoNext =>
-        Game.Courts.Count >= 1 &&
-        Game.Players.Count >= 4 &&
-        (Game.Matches.Count == 0 || AllScoresFilled());
+    void FinalRound()
+    {
+        // Commit the current visible round (push to histories & update stats)
+        if (Game.Matches.Count > 0)
+        {
+            if (!AllScoresFilled()) return; // safety
+            CommitCurrentRound();
+        }
+
+        // Build the final pairing(s)
+        GenerateFinalRoundMatches();
+
+        // Optional: mark round name/number
+        Game.CurrentRound++;
+        StateHasChanged();
+    }
+
+    void GenerateFinalRoundMatches()
+    {
+        Game.Matches.Clear();
+
+        // Rank players for finals according to your standings rule
+        var ranked = OrderPlayersForFinal(Game.Players).ToList();
+        if (ranked.Count < 4) return;
+
+        if (Game.TeamFormat == TeamFormat.Individual)
+        {
+            // One showcase doubles final on the first court using top 4 and selected option
+            var court = Game.Courts.First();
+
+            var (t1, t2) = Game.FinalPairingOption switch
+            {
+                FinalPairingOption.OneTwoVsThreeFour => (new[] { ranked[0], ranked[1] }, new[] { ranked[2], ranked[3] }),
+                FinalPairingOption.OneFourVsTwoThree => (new[] { ranked[0], ranked[3] }, new[] { ranked[1], ranked[2] }),
+                FinalPairingOption.OneThreeVsTwoFour => (new[] { ranked[0], ranked[2] }, new[] { ranked[1], ranked[3] }),
+                _ => (new[] { ranked[0], ranked[1] }, new[] { ranked[2], ranked[3] })
+            };
+
+            var m = new Match { Round = Game.CurrentRound, CourtName = court.Name };
+            m.Team1.AddRange(t1);
+            m.Team2.AddRange(t2);
+            Game.Matches.Add(m);
+        }
+        else // TeamFormat.Pairs
+        {
+            var block = 0;
+            for (var c = 0; c < Game.Courts.Count; c++)
+            {
+                var i = block * 2;
+                if (i + 2 >= ranked.Count) break;
+
+                var m = new Match { Round = Game.CurrentRound, CourtName = Game.Courts[c].Name };
+                m.Team1.Add(ranked[i + 0]);
+                m.Team2.Add(ranked[i + 1]);
+
+                Game.Matches.Add(m);
+                block++;
+            }
+        }
+    }
+
+    IEnumerable<Player> OrderPlayersForFinal(IEnumerable<Player> players)
+    {
+        return Game.ResultSorting switch
+        {
+            ResultSorting.WinsOverPoints =>
+                players.OrderByDescending(p => p.Wins)
+                    .ThenByDescending(p => p.Points)
+                    .ThenBy(p => p.Order)
+                    .ThenBy(p => p.Name),
+
+            ResultSorting.PointsOverWins =>
+                players.OrderByDescending(p => p.Points)
+                    .ThenByDescending(p => p.Wins)
+                    .ThenBy(p => p.Order)
+                    .ThenBy(p => p.Name),
+
+            _ =>
+                players.OrderByDescending(p => p.Points)
+                    .ThenByDescending(p => p.Wins)
+                    .ThenBy(p => p.Order)
+                    .ThenBy(p => p.Name)
+        };
+    }
 
     bool AllScoresFilled()
         => Game.Matches.All(m => (m.Team1Points + m.Team2Points) == Game.ToPoints);
+
+    bool BaseReady()
+        => Game.Courts.Count >= 1 && Game.Players.Count >= 4;
+
+    bool CanGoNext
+        => BaseReady() && (Game.Matches.Count == 0 || AllScoresFilled());
+
+    bool CanGoFinal
+        => CanGoNext && Game.Matches.Count > 0;
 }
