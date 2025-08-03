@@ -1,0 +1,386 @@
+@page "/"
+@using BlazorBootstrap
+@using PadelTournamentManager.Models.Enums
+
+<!-- Fullscreen, oversized, rotated 🎾 background -->
+<div class="bg-emoji-fixed" aria-hidden="true"></div>
+
+<div class="container py-4">
+    <div class="row g-4">
+
+        <!-- Tournament type -->
+        <div class="col-lg-6">
+            <Card Class="h-100 border-0 shadow-sm rounded-4 bg-primary-subtle">
+                <CardBody Class="text-center p-4">
+                    <CardTitle Class="mb-3 fw-semibold text-primary-emphasis">🏆 Tournament type</CardTitle>
+
+                    <div class="d-inline-block text-start">
+                        <div class="form-check mb-2">
+                            <RadioInput Name="TournamentType" Label="Americano" @bind-Value="IsAmericano" />
+                        </div>
+                        <div class="form-check">
+                            <RadioInput Name="TournamentType" Label="Mexicano" @bind-Value="IsMexicano" />
+                        </div>
+                    </div>
+                </CardBody>
+            </Card>
+        </div>
+
+        <!-- Result sorting -->
+        <div class="col-lg-6">
+            <Card Class="h-100 border-0 shadow-sm rounded-4 bg-info-subtle">
+                <CardBody Class="text-center p-4">
+                    <CardTitle Class="mb-3 fw-semibold text-info-emphasis">📊 Result sorting</CardTitle>
+
+                    <div class="d-inline-block text-start">
+                        <div class="form-check mb-2">
+                            <RadioInput Name="ResultSorting" Label="Points then wins" @bind-Value="IsPointsThenWins" />
+                        </div>
+                        <div class="form-check">
+                            <RadioInput Name="ResultSorting" Label="Wins then points" @bind-Value="IsWinsThenPoints" />
+                        </div>
+                    </div>
+                </CardBody>
+            </Card>
+        </div>
+
+        <div class="col-lg-6">
+            <Card Class="h-100 border-0 shadow-sm rounded-4 bg-warning-subtle">
+                <CardBody Class="text-center p-4">
+                    <CardTitle Class="mb-3 fw-semibold text-warning-emphasis">🎯 Scoring</CardTitle>
+
+                    <div class="d-inline-block text-start" style="min-width:320px; max-width:460px;">
+
+                        <div class="form-check mb-2">
+                            <RadioInput Name="ScoringMode"
+                                        Label="Play points or games"
+                                        @bind-Value="IsPlayPointsOrGames" />
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="form-check m-0">
+                                <RadioInput Name="ScoringMode"
+                                            Label="Play to"
+                                            @bind-Value="IsPlayToPoints" />
+                            </div>
+
+                            <InputNumber @bind-Value="Game.ToPoints"
+                                         class="form-control form-control-sm w-auto"
+                                         min="1" max="99"
+                                         disabled="@(!IsPlayToPoints)" />
+                            <span>points</span>
+                        </div>
+                    </div>
+                </CardBody>
+            </Card>
+        </div>
+
+
+        <div class="col-lg-6">
+            <Card Class="h-100 border-0 shadow-sm rounded-4 bg-success-subtle">
+                <CardBody Class="text-center p-4">
+                    <CardTitle Class="mb-3 fw-semibold text-success-emphasis">👥 Team format</CardTitle>
+
+                    <div class="d-inline-block text-start">
+                        <div class="form-check mb-2">
+                            <RadioInput Name="TeamFormat" Label="Individually" @bind-Value="IsIndividual" />
+                        </div>
+                        <div class="form-check">
+                            <RadioInput Name="TeamFormat" Label="Team" @bind-Value="IsTeam" />
+                        </div>
+                    </div>
+                </CardBody>
+            </Card>
+        </div>
+
+        <div class="col-lg-6">
+            <Card Class="h-100 border-0 shadow-sm rounded-4 bg-light">
+                <CardBody Class="text-center p-4">
+                    <CardTitle class="mb-3 fw-semibold">🎾 Courts</CardTitle>
+
+                    <div class="d-flex justify-content-center">
+                        <div class="input-group mb-3" style="max-width: 480px;">
+                            <TextInput Placeholder="Court name"
+                                       @bind-Value="NewCourtName"
+                                       OnInput="@((ChangeEventArgs e) => NewCourtName = e?.Value?.ToString() )"
+                                       @onkeyup="@(e => OnEnterUp(e, AddCourt) )" />
+                            <Button Color="ButtonColor.Secondary" Class="px-4" @onclick="AddCourt">ADD</Button>
+                        </div>
+                    </div>
+
+                    <ol class="list-unstyled mb-0 d-inline-block text-start w-100" style="max-width: 560px;">
+                        @foreach (var c in Game.Courts)
+                        {
+                            <li @key="c.Order" class="d-flex align-items-center py-2 border-bottom">
+
+                                @if (c.IsEditing)
+                                {
+                                    <div class="flex-grow-1 me-3">
+                                        <TextInput Placeholder="Court name"
+                                               @bind-Value="c.EditName"
+                                               OnInput="@((ChangeEventArgs e) => c.EditName = e?.Value?.ToString())"
+                                               @onkeyup="@(e => OnEnterUp(e, () => SaveCourt(c.Order)))"/>
+                                    </div>
+
+                                    <Button Color="ButtonColor.Secondary" Class="me-2"
+                                            Title="Save" @onclick="@(() => SaveCourt(c.Order))">
+                                        <Icon Name="IconName.Check2" />
+                                    </Button>
+                                    <Button Color="ButtonColor.Link" Class="me-3"
+                                            Title="Cancel" @onclick="@(() => CancelEditCourt(c.Order))">
+                                        <Icon Name="IconName.XLg" />
+                                    </Button>
+                                }
+                                else
+                                {
+                                    <span class="me-2 fw-medium">@c.Order.</span>
+                                    <span class="flex-grow-1">@c.Name</span>
+                                    
+                                    <Badge Color="BadgeColor.Primary" IndicatorType="BadgeIndicatorType.RoundedPill" Class="me-3">
+                                        PADEL
+                                    </Badge>
+
+                                    <Button Color="ButtonColor.Link" Class="me-2"
+                                            Title="Edit" @onclick="@(() => EditCourtByOrder(c.Order))">
+                                        <Icon Name="IconName.PencilSquare" />
+                                    </Button>
+                                }
+
+                                <Button Color="ButtonColor.Link" Class="text-danger p-0"
+                                        Title="Delete" @onclick="@(() => RemoveCourtByOrder(c.Order))">
+                                    <Icon Name="IconName.TrashFill" />
+                                </Button>
+                            </li>
+                        }
+                    </ol>
+                </CardBody>
+            </Card>
+        </div>
+
+        <div class="col-lg-6">
+            <Card Class="h-100 border-0 shadow-sm rounded-4 bg-secondary-subtle">
+                <CardBody Class="text-center p-4">
+                    <CardTitle class="mb-3 fw-semibold text-secondary-emphasis">🧑‍🤝‍🧑 Players</CardTitle>
+
+                    <div class="d-flex justify-content-center">
+                        <div class="input-group mb-3" style="max-width: 480px;">
+                            <TextInput Placeholder="Player name"
+                                       @bind-Value="NewPlayerName"
+                                       OnInput="@((ChangeEventArgs e) => NewPlayerName = e?.Value?.ToString() )"
+                                       @onkeyup="@(e => OnEnterUp(e, AddPlayer) )" />
+                            <Button Color="ButtonColor.Secondary" Class="px-4" @onclick="AddPlayer">ADD</Button>
+                        </div>
+                    </div>
+
+                    <ol class="list-unstyled mb-0 d-inline-block text-start w-100" style="max-width: 560px;">
+                        @foreach (var p in Game.Players)
+                        {
+                            <li @key="p.Name" class="d-flex align-items-center py-2 border-bottom">
+                                <span class="me-2 fw-medium">@p.Order.</span>
+
+                                @if (p.IsEditing)
+                                {
+                                    <div class="flex-grow-1 me-3">
+                                        <TextInput Placeholder="Player name"
+                                               @bind-Value="p.EditName"
+                                               OnInput="@((ChangeEventArgs e) => p.EditName = e?.Value?.ToString())"
+                                               @onkeyup="@(e => OnEnterUp(e, () => SavePlayer(p.Name)))"/>
+                                    </div>
+
+                                    <Button Color="ButtonColor.Secondary" Class="me-2"
+                                            Title="Save" @onclick="@(() => SavePlayer(p.Name))">
+                                        <Icon Name="IconName.Check2" />
+                                    </Button>
+                                    <Button Color="ButtonColor.Link" Class="me-3"
+                                            Title="Cancel" @onclick="@(() => CancelEditPlayer(p.Name))">
+                                        <Icon Name="IconName.XLg" />
+                                    </Button>
+                                }
+                                else
+                                {
+                                    <span class="flex-grow-1">@p.Name</span>
+
+                                    <Badge Color="BadgeColor.Secondary"
+                                           IndicatorType="BadgeIndicatorType.RoundedPill"
+                                           Class="me-3">
+                                        PLAYER
+                                    </Badge>
+
+                                    <Button Color="ButtonColor.Link" Class="me-2"
+                                            Title="Edit" @onclick="@(() => EditPlayer(p.Name))">
+                                        <Icon Name="IconName.PencilSquare" />
+                                    </Button>
+                                }
+
+                                <Button Color="ButtonColor.Link" Class="text-danger p-0"
+                                        Title="Delete" @onclick="@(() => RemovePlayerById(p.Name))">
+                                    <Icon Name="IconName.TrashFill" />
+                                </Button>
+                            </li>
+                        }
+                    </ol>
+                </CardBody>
+            </Card>
+        </div>
+
+    </div>
+</div>
+
+@code {
+
+    private Game Game { get; set; } = new();
+
+    // Radio bindings (map bool <-> string for Blazor.Bootstrap RadioInput)
+    private bool IsAmericano { get => Game.TournamentType == TournamentType.Americano; set { if (value) Game.TournamentType = TournamentType.Americano; } }
+    private bool IsMexicano { get => Game.TournamentType == TournamentType.Mexicano; set { if (value) Game.TournamentType = TournamentType.Mexicano; } }
+
+    private bool IsPointsThenWins { get => Game.ResultSorting == ResultSorting.PointsOverWins; set { if (value) Game.ResultSorting = ResultSorting.PointsOverWins; } }
+    private bool IsWinsThenPoints { get => Game.ResultSorting == ResultSorting.WinsOverPoints; set { if (value) Game.ResultSorting = ResultSorting.WinsOverPoints; } }
+
+    private bool IsPlayPointsOrGames { get => Game.ScoringType == ScoringType.GamesAndSets; set { if (value) Game.ScoringType = ScoringType.GamesAndSets; } }
+    private bool IsPlayToPoints { get => Game.ScoringType == ScoringType.Points; set { if (value) Game.ScoringType = ScoringType.Points; } }
+
+    private bool IsIndividual { get => Game.TeamFormat == TeamFormat.Individual; set { if (value) Game.TeamFormat = TeamFormat.Individual; } }
+    private bool IsTeam { get => Game.TeamFormat == TeamFormat.Pairs; set { if (value) Game.TeamFormat = TeamFormat.Pairs; } }
+
+    private string? NewCourtName { get; set; }
+    private string? NewPlayerName { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        Game.Courts = [new Court("Court 1", 1), new Court("Court 2", 2)];
+        Game.Players = [];
+    }
+
+    void AddCourt()
+    {
+        var name = (NewCourtName ?? string.Empty).Trim();
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            Game.Courts.Add(new Court(name, Game.Courts.Count + 1));
+            NewCourtName = string.Empty;
+        }
+    }
+
+    void RemoveCourtByOrder(int order)
+    {
+        var found = Game.Courts.FirstOrDefault(x => x.Order == order);
+        if (found is not null)
+        {
+            Game.Courts.Remove(found);
+        }
+        ReindexCourts(order);
+    }
+
+    void EditCourtByOrder(int order)
+    {
+        var c = Game.Courts.FirstOrDefault(x => x.Order == order);
+        if (c is null)
+        {
+            return;
+        }
+        c.EditName = c.Name;
+        c.IsEditing = true;
+    }
+
+    void SaveCourt(int order)
+    {
+        var c = Game.Courts.FirstOrDefault(x => x.Order == order);
+        if (c is null)
+        {
+            return;
+        }
+        var newName = c.EditName?.Trim() ?? c.Name;
+        if (!string.IsNullOrWhiteSpace(newName)) c.Name = newName;
+        c.IsEditing = false;
+        c.EditName = null;
+        ReindexPlayers();
+    }
+
+    void CancelEditCourt(int order)
+    {
+        var c = Game.Courts.FirstOrDefault(x => x.Order == order);
+        if (c is null)
+        {
+            return;
+        }
+        c.IsEditing = false;
+        c.EditName = null;
+    }
+
+    void ReindexCourts(int order)
+    {
+        for (var i = order; i < Game.Courts.Count; i++)
+        {
+            Game.Courts[i].Order = i + 1;
+        }
+    }
+
+    void AddPlayer()
+    {
+        var name = (NewPlayerName ?? string.Empty).Trim();
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            Game.Players.Add(new Player(name, Game.Players.Count + 1));
+            NewPlayerName = string.Empty;
+        }
+        ReindexPlayers();
+    }
+
+    void EditPlayer(string name)
+    {
+        var p = Game.Players.FirstOrDefault(x => x.Name == name);
+        if (p is null)
+        {
+            return;
+        }
+        p.EditName = p.Name;
+        p.IsEditing = true;
+    }
+
+    void SavePlayer(string name)
+    {
+        var p = Game.Players.FirstOrDefault(x => x.Name == name);
+        if (p is null)
+        {
+            return;
+        }
+        var newName = p.EditName?.Trim() ?? p.Name;
+        if (!string.IsNullOrWhiteSpace(newName)) p.Name = newName;
+        p.IsEditing = false;
+        p.EditName = null;
+        ReindexPlayers();
+    }
+
+    void CancelEditPlayer(string name)
+    {
+        var p = Game.Players.FirstOrDefault(x => x.Name == name);
+        if (p is null)
+        {
+            return;
+        }
+        p.IsEditing = false;
+        p.EditName = null;
+    }
+
+    void RemovePlayerById(string name)
+    {
+        var found = Game.Players.FirstOrDefault(x => x.Name == name);
+        if (found is not null) Game.Players.Remove(found);
+        ReindexPlayers();
+    }
+
+    void ReindexPlayers()
+    {
+        for (var i = 0; i < Game.Players.Count; i++)
+        {
+            Game.Players[i].Order = i + 1;
+        }
+    }
+
+    void OnEnterUp(KeyboardEventArgs e, Action action)
+    {
+        if (e.Key == "Enter") action();
+    }
+}
