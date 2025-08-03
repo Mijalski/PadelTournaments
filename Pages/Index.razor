@@ -310,14 +310,14 @@
     </div>
 }
 
-        
-<div class="text-center mt-4">
-    <Button Color="ButtonColor.Primary"
-            Disabled="@(Game.Courts.Count == 0 || Game.Players.Count < 4)"
-            @onclick="NextRound">
-        ▶ Next
-    </Button>
-</div>
+
+    <div class="text-center my-4">
+        <Button Color="ButtonColor.Primary"
+                Disabled="@(!CanGoNext)"
+                @onclick="NextRound">
+            ▶ Next
+        </Button>
+    </div>
 </div>
 
 </div>
@@ -350,7 +350,7 @@
     {
         base.OnInitialized();
         Game.Courts = [new Court("Court 1", 1), new Court("Court 2", 2)];
-        Game.Players = [];
+        Game.Players = [new Player("Dominik P", 1), new Player("Hajzen", 1), new Player("Hubert", 1), new Player("Pan Krzysztof", 1),];
     }
 
     void AddCourt()
@@ -486,24 +486,69 @@
 
     void NextRound()
     {
-        Game.Matches.Clear();
-
-        var courts = Game.Courts;
-        var players = Game.Players.OrderBy(_ => Guid.NewGuid()).ToList();
-
-        var playerIndex = 0;
-        for (int i = 0; i < courts.Count && playerIndex + 3 < players.Count; i++)
+        // If there are current matches, require completion and commit them first
+        if (Game.Matches.Count > 0)
         {
-            var match = new Match
-            {
-                CourtName = courts[i].Name,
-                Team1 = [players[playerIndex++], players[playerIndex++]],
-                Team2 = [players[playerIndex++], players[playerIndex++]],
-            };
-            Game.Matches.Add(match);
+            if (!AllScoresFilled())
+                return; // guard: shouldn't be clickable, but double-protect
+
+            CommitCurrentRound();
         }
 
+        // Generate the next round (keep your actual Americano/Mexicano logic here)
+        GenerateNextRoundMatches();
+
         Game.CurrentRound++;
+        StateHasChanged();
+    }
+
+    void GenerateNextRoundMatches()
+    {
+        var shuffled = Game.Players.OrderBy(_ => Guid.NewGuid()).ToList();
+        var i = 0;
+
+        foreach (var court in Game.Courts)
+        {
+            if (i >= shuffled.Count) break;
+
+            var m = new Match { Round = Game.CurrentRound, CourtName = court.Name };
+
+            // Team1 (treat player1 as a team if needed)
+            m.Team1.Add(shuffled[i++]);
+            if (Game.TeamFormat == TeamFormat.Pairs && i < shuffled.Count) m.Team1.Add(shuffled[i++]);
+
+            // Team2
+            if (i < shuffled.Count) m.Team2.Add(shuffled[i++]);
+            if (Game.TeamFormat == TeamFormat.Pairs && i < shuffled.Count) m.Team2.Add(shuffled[i++]);
+
+            // If we couldn't form at least 1v1, stop
+            if (m.Team2.Count == 0) break;
+
+            Game.Matches.Add(m);
+        }
+    }
+
+    void CommitCurrentRound()
+    {
+        foreach (var m in Game.Matches)
+        {
+            // Push to history for each player
+            foreach (var p in m.Team1) p.MatchHistory.Add(m);
+            foreach (var p in m.Team2) p.MatchHistory.Add(m);
+
+            // Update per-player stats
+            foreach (var p in m.Team1) p.Points += m.Team1Points.Value;
+            foreach (var p in m.Team2) p.Points += m.Team2Points.Value;
+
+            if (m.Team1Points > m.Team2Points)
+                foreach (var p in m.Team1) p.Wins += 1;
+            else if (m.Team2Points > m.Team1Points)
+                foreach (var p in m.Team2) p.Wins += 1;
+            // ties => no Wins increment
+        }
+
+        // Optional: persist/clear the on-screen matches after commit
+        Game.Matches.Clear();
     }
 
     string TeamText(List<Player> team)
@@ -544,4 +589,12 @@
 
         StateHasChanged();
     }
+
+    bool CanGoNext =>
+        Game.Courts.Count >= 1 &&
+        Game.Players.Count >= 4 &&
+        (Game.Matches.Count == 0 || AllScoresFilled());
+
+    bool AllScoresFilled()
+        => Game.Matches.All(m => (m.Team1Points + m.Team2Points) == Game.ToPoints);
 }
