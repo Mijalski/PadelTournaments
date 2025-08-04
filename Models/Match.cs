@@ -6,9 +6,9 @@ public class Match
 {
     public int Round { get; set; }
 
-    public List<Player> Team1 { get; set; } = new();
+    public List<Player> Team1 { get; set; } = [];
 
-    public List<Player> Team2 { get; set; } = new();
+    public List<Player> Team2 { get; set; } = [];
 
     public string CourtName { get; set; }
 

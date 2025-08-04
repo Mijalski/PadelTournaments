@@ -182,3 +182,7 @@
     position: absolute;
     inset: 0;
 }
+
+.modal-dialog   {
+    max-width: 90vw !important;
+}

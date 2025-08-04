@@ -34,7 +34,7 @@
 
                                 @if (view == ViewMode.Detailed)
                                 {
-                                    @for (int r = 1; r <= MaxRound; r++)
+                                    @for (var r = 1; r <= MaxRound; r++)
                                     {
                                         <th class="text-center">Round @r</th>
                                     }
@@ -58,7 +58,7 @@
 
                                     @if (view == ViewMode.Detailed)
                                     {
-                                        @for (int r = 1; r <= MaxRound; r++)
+                                        @for (var r = 1; r <= MaxRound; r++)
                                         {
                                             var pts = row.PointsByRound.TryGetValue(r, out var p) ? p : 0;
                                             var isWin = row.WinsByRound.TryGetValue(r, out var w) && w;
@@ -85,8 +85,8 @@
 
 @code {
     // Inputs
-    [Parameter] public IEnumerable<Match> Matches { get; set; } = Enumerable.Empty<Match>();
-    [Parameter] public IEnumerable<Player> Players { get; set; } = Enumerable.Empty<Player>();
+    [Parameter] public IEnumerable<Match> Matches { get; set; } = [];
+    [Parameter] public IEnumerable<Player> Players { get; set; } = [];
 
     // Modal API
     private Modal _modal = default!;
@@ -109,7 +109,7 @@
         public int Position { get; set; }
     }
 
-    List<RowModel> Rows { get; set; } = new();
+    List<RowModel> Rows { get; set; } = [];
     int MaxRound { get; set; }
 
     IEnumerable<RowModel> SortedRows =>
@@ -125,7 +125,7 @@
         if (MaxRound == 0) return;
 
         // Build lookup of players -> row
-        var allPlayers = Players?.ToList() ?? new();
+        var allPlayers = Players?.ToList() ?? [];
         if (!allPlayers.Any())
         {
             // fallback: infer from matches

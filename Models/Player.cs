@@ -22,5 +22,5 @@ public class Player
 
     public string? EditName { get; set; }
 
-    public List<Match> MatchHistory = new();
+    public List<Match> MatchHistory = [];
 }

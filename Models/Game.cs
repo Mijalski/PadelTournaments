@@ -17,11 +17,11 @@ public class Game
 
     public int ToPoints { get; set; } = 21;
 
-    public List<Court> Courts { get; set; } = new();
+    public List<Court> Courts { get; set; } = [];
 
-    public List<Player> Players { get; set; } = new();
+    public List<Player> Players { get; set; } = [];
 
-    public List<Match> Matches { get; set; } = new();
+    public List<Match> Matches { get; set; } = [];
 
     public int CurrentRound { get; set; } = 0;
 }

@@ -380,6 +380,7 @@
     bool ShowMatches => Game.Matches.Any();
 
     private static readonly Random _rng = new();
+    private readonly Queue<Player> _skipQueue = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -556,92 +557,86 @@
 
     void GenerateNextRoundMatches()
     {
-        Console.WriteLine(Game.CurrentRound);
+        // Optional guard: finish latest round
+        var latestRound = Game.Matches.Any() ? Game.Matches.Max(m => m.Round) : 0;
+        var latestMatches = Game.Matches.Where(m => m.Round == latestRound).ToList();
+        if (latestRound > 0 && latestMatches.Any() && latestMatches.Any(m => m.Team1Points + m.Team2Points != Game.ToPoints))
+            return;
 
-        // Early/late Mexicano rule
-        bool useMexicanoByScore = Game.TournamentType == TournamentType.Mexicano && Game.CurrentRound > 3;
+        // --- Round-robin skipper selection ---
+        EnsureSkipQueueUpToDate();
+        var cap = ComputeCapacity();
+        if (cap.matches == 0) return;
 
-        if (!useMexicanoByScore)
+        var skippers = TakeSkippers(cap.skipping);
+        var selected = Game.Players.Where(p => !skippers.Contains(p)).ToList();
+
+        var mexicanoByScore = Game.TournamentType == TournamentType.Mexicano && Game.CurrentRound > 3;
+
+        // === Pair the selected players ===
+        if (!mexicanoByScore)
         {
-            // AMERICANO or early MEXICANO → random
-            var pool = Game.Players.OrderBy(_ => _rng.Next()).ToList();
-            int p = 0, c = 0;
-
-            if (Game.TeamFormat == TeamFormat.Pairs) // singles (1v1)
+            // Americano (always random) or early Mexicano
+            var pool = selected.OrderBy(_ => _rng.Next()).ToList();
+            var p = 0;
+            for (var c = 0; c < cap.matches; c++)
             {
-                while (c < Game.Courts.Count && p + 1 < pool.Count)
+                var m = new Match { Round = Game.CurrentRound, CourtName = Game.Courts[c].Name };
+
+                if (Game.TeamFormat == TeamFormat.Pairs) // singles 1v1
                 {
-                    var m = new Match { Round = Game.CurrentRound, CourtName = Game.Courts[c].Name };
                     m.Team1.Add(pool[p++]);
                     m.Team2.Add(pool[p++]);
-                    Game.Matches.Add(m);
-                    c++;
                 }
-            }
-            else // Individual → doubles (2v2)
-            {
-                while (c < Game.Courts.Count && p + 3 < pool.Count)
+                else // Individual -> doubles 2v2
                 {
-                    var m = new Match { Round = Game.CurrentRound, CourtName = Game.Courts[c].Name };
                     m.Team1.Add(pool[p++]); m.Team1.Add(pool[p++]);
                     m.Team2.Add(pool[p++]); m.Team2.Add(pool[p++]);
-                    Game.Matches.Add(m);
-                    c++;
                 }
-            }
 
-            return;
-        }
-
-        // MEXICANO (after round 3): pair by similar score
-        var ranked = Game.Players
-            .OrderByDescending(p => p.Points)
-            .ThenByDescending(p => p.Wins)
-            .ThenBy(p => p.Order)
-            .ThenBy(p => p.Name)
-            .ToList();
-
-        int idx = 0, courtIx = 0;
-
-        if (Game.TeamFormat == TeamFormat.Pairs) // singles (1v1): 2 at a time (1 vs 2), (3 vs 4)...
-        {
-            while (courtIx < Game.Courts.Count && idx + 1 < ranked.Count)
-            {
-                var p1 = ranked[idx++];
-                var p2 = ranked[idx++];
-
-                var m = new Match { Round = Game.CurrentRound, CourtName = Game.Courts[courtIx].Name };
-                m.Team1.Add(p1);
-                m.Team2.Add(p2);
                 Game.Matches.Add(m);
-
-                courtIx++;
             }
         }
-        else // Individual → doubles (2v2): quartets 1,4 v 2,3 OR 1,3 v 2,4
+        else
         {
-            while (courtIx < Game.Courts.Count && idx + 3 < ranked.Count)
+            // Mexicano after 3 rounds: similar-level groups
+            var ranked = selected
+                .OrderByDescending(p => p.Points)
+                .ThenByDescending(p => p.Wins)
+                .ThenBy(p => p.Order)
+                .ThenBy(p => p.Name)
+                .ToList();
+
+            var idx = 0;
+            for (var c = 0; c < cap.matches; c++)
             {
-                var p1 = ranked[idx + 0];
-                var p2 = ranked[idx + 1];
-                var p3 = ranked[idx + 2];
-                var p4 = ranked[idx + 3];
-                idx += 4;
+                var m = new Match { Round = Game.CurrentRound, CourtName = Game.Courts[c].Name };
 
-                bool option14_23 = _rng.Next(2) == 0;
-                var left = option14_23 ? new[] { p1, p4 } : new[] { p1, p3 };
-                var right = option14_23 ? new[] { p2, p3 } : new[] { p2, p4 };
+                if (Game.TeamFormat == TeamFormat.Pairs) // singles 1v1: neighbor pairs
+                {
+                    var p1 = ranked[idx++]; var p2 = ranked[idx++];
+                    m.Team1.Add(p1);
+                    m.Team2.Add(p2);
+                }
+                else // Individual -> doubles 2v2: quartets
+                {
+                    var p1 = ranked[idx + 0];
+                    var p2 = ranked[idx + 1];
+                    var p3 = ranked[idx + 2];
+                    var p4 = ranked[idx + 3];
+                    idx += 4;
 
-                var m = new Match { Round = Game.CurrentRound, CourtName = Game.Courts[courtIx].Name };
-                m.Team1.AddRange(left);
-                m.Team2.AddRange(right);
+                    var option14_23 = _rng.Next(2) == 0;
+                    var left = option14_23 ? [p1, p4] : new[] { p1, p3 };
+                    var right = option14_23 ? [p2, p3] : new[] { p2, p4 };
+
+                    m.Team1.AddRange(left);
+                    m.Team2.AddRange(right);
+                }
+
                 Game.Matches.Add(m);
-
-                courtIx++;
             }
         }
-
-        Console.WriteLine(Game.Matches);
     }
 
     void CommitCurrentRound()
@@ -668,8 +663,8 @@
     {
         return team.Count switch
         {
-            0 => new[] { "?", "?" },
-            1 => new[] { team[0].Name, "?" },
+            0 => ["?", "?"],
+            1 => [team[0].Name, "?"],
             _ => new[] { team[0].Name, team[1].Name }
         };
     }
@@ -741,26 +736,33 @@
 
         if (Game.TeamFormat == TeamFormat.Individual)
         {
-            var court = Game.Courts.First();
-            var (t1, t2) = Game.FinalPairingOption switch
+            var block = 0;
+            for (var c = 0; c < Game.Courts.Count; c++)
             {
-                FinalPairingOption.OneTwoVsThreeFour => (new[] { ranked[0], ranked[1] }, new[] { ranked[2], ranked[3] }),
-                FinalPairingOption.OneFourVsTwoThree => (new[] { ranked[0], ranked[3] }, new[] { ranked[1], ranked[2] }),
-                FinalPairingOption.OneThreeVsTwoFour => (new[] { ranked[0], ranked[2] }, new[] { ranked[1], ranked[3] }),
-                _ => (new[] { ranked[0], ranked[1] }, new[] { ranked[2], ranked[3] })
-            };
+                var i = block * 4;
+                if (i + 3 >= ranked.Count) break;
 
-            var m = new Match { Round = nextRound, CourtName = court.Name };
-            m.Team1.AddRange(t1);
-            m.Team2.AddRange(t2);
-            finalMatches.Add(m);
+                var (t1, t2) = Game.FinalPairingOption switch
+                {
+                    FinalPairingOption.OneTwoVsThreeFour => ([ranked[0 + i], ranked[1 + i]], [ranked[2 + i], ranked[3 + i]]),
+                    FinalPairingOption.OneFourVsTwoThree => ([ranked[0 + i], ranked[3 + i]], [ranked[1 + i], ranked[2 + i]]),
+                    FinalPairingOption.OneThreeVsTwoFour => ([ranked[0 + i], ranked[2 + i]], [ranked[1 + i], ranked[3 + i]]),
+                    _ => (new[] { ranked[0 + i], ranked[1 + i] }, new[] { ranked[2 + i], ranked[3 + i] })
+                };
+
+                var m = new Match { Round = nextRound, CourtName = Game.Courts[c].Name };
+                m.Team1.AddRange(t1);
+                m.Team2.AddRange(t2);
+                finalMatches.Add(m);
+                block++;
+            }
         }
         else // TeamFormat.Pairs -> doubles blocks: (1&2) vs (3&4), (5&6) vs (7&8), ...
         {
-            int block = 0;
-            for (int c = 0; c < Game.Courts.Count; c++)
+            var block = 0;
+            for (var c = 0; c < Game.Courts.Count; c++)
             {
-                int i = block * 4;
+                var i = block * 4;
                 if (i + 3 >= ranked.Count) break;
 
                 var m = new Match { Round = nextRound, CourtName = Game.Courts[c].Name };
@@ -789,7 +791,7 @@
         var skipping = ranked.Where(p => !finalists.Contains(p)).ToList();
 
         // Assign positions: finalists first, then skippers
-        int pos = 1;
+        var pos = 1;
         foreach (var p in finalists) _finalPositions[p] = pos++;
         foreach (var p in skipping) _finalPositions[p] = pos++;
 
@@ -899,4 +901,91 @@
         6 => "row-cols-1 row-cols-lg-3",   // 3 per row on lg+ screens
         _ => "row-cols-1 row-cols-md-2 row-cols-xl-3" // default responsive
     };
+
+    void EnsureSkipQueueUpToDate()
+    {
+        // Keep existing order for players that still exist, append any new players deterministically
+        var current = Game.Players.ToList();
+
+        // If counts match and all queue members still present, assume OK
+        if (_skipQueue.Count == current.Count && _skipQueue.All(p => current.Contains(p)))
+            return;
+
+        // Rebuild: start with players that are currently in the queue (preserve order), keep only those still present
+        var preserved = _skipQueue.Where(current.Contains).ToList();
+        _skipQueue.Clear();
+        foreach (var p in preserved) _skipQueue.Enqueue(p);
+
+        // Append missing players by stable order (Order, Name)
+        foreach (var p in current
+            .Except(preserved)
+            .OrderBy(p => p.Order)
+            .ThenBy(p => p.Name))
+        {
+            _skipQueue.Enqueue(p);
+        }
+
+        // If queue ended empty (first run), seed it
+        if (_skipQueue.Count == 0)
+        {
+            foreach (var p in current.OrderBy(p => p.Order).ThenBy(p => p.Name))
+                _skipQueue.Enqueue(p);
+        }
+    }
+
+    int PlayersPerMatch() => Game.TeamFormat == TeamFormat.Pairs ? 2 : 4;
+
+    (int matches, int playing, int skipping) ComputeCapacity()
+    {
+        var courts = Game.Courts.Count;
+        var n = Game.Players.Count;
+        var ppm = PlayersPerMatch();
+
+        if (courts <= 0 || n < ppm) return (0, 0, n);
+
+        var m = Math.Min(courts, n / ppm);
+        var playing = m * ppm;
+        var skipping = Math.Max(0, n - playing);
+        return (m, playing, skipping);
+    }
+
+    // Dequeue `count` skippers (round-robin) and rotate them to the back.
+    // Guarantees all skippers are members of Game.Players.
+    List<Player> TakeSkippers(int count)
+    {
+        EnsureSkipQueueUpToDate();
+
+        var present = Game.Players.ToHashSet();
+        var picked = new List<Player>(Math.Max(0, count));
+
+        // We limit iterations to safety bound
+        var safety = _skipQueue.Count * 2;
+        while (picked.Count < count && safety-- > 0 && _skipQueue.Count > 0)
+        {
+            var p = _skipQueue.Dequeue();
+            if (present.Contains(p))
+            {
+                picked.Add(p);
+                _skipQueue.Enqueue(p); // rotate to the back after being picked to skip
+            }
+            else
+            {
+                // If player is no longer present, don't re-enqueue
+            }
+        }
+
+        // If still short (added players just now), rebuild and retry once
+        if (picked.Count < count)
+        {
+            EnsureSkipQueueUpToDate();
+            while (picked.Count < count && _skipQueue.Count > 0)
+            {
+                var p = _skipQueue.Dequeue();
+                picked.Add(p);
+                _skipQueue.Enqueue(p);
+            }
+        }
+
+        return picked;
+    }
 }
