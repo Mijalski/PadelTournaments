@@ -165,13 +165,19 @@
                 <CardTitle class="mb-3 fw-semibold text-secondary-emphasis">🧑‍🤝‍🧑 Players</CardTitle>
 
                 <div class="d-flex justify-content-center">
-                    <div class="input-group mb-3" style="max-width: 480px;">
-                        <TextInput Placeholder="Player name"
-                                   @bind-Value="NewPlayerName"
-                                   OnInput="@((ChangeEventArgs e) => NewPlayerName = e?.Value?.ToString() )"
-                                   @onkeyup="@(e => OnEnterUp(e, AddPlayer) )" />
-                        <Button Color="ButtonColor.Secondary" Class="px-4" @onclick="AddPlayer">ADD</Button>
+                            <div class="input-group mb-3" style="max-width: 480px;">
+                                <TextInput Placeholder="Player name"
+                                           @bind-Value="NewPlayerName"
+                                           OnInput="@((ChangeEventArgs e) => NewPlayerName = e?.Value?.ToString())"
+                                           @onkeyup="@(e => OnEnterUp(e, AddPlayer))" />
+
+                        <Button Color="ButtonColor.Primary" @onclick="AddPlayer" Disabled="@NameExists(NewPlayerName)">Add</Button>
                     </div>
+
+                    @if (NameExists(NewPlayerName))
+                    {
+                        <div class="invalid-feedback d-block">Player name exists</div>
+                    }
                 </div>
 
                 <ol class="list-unstyled mb-0 d-inline-block text-start w-100" style="max-width: 560px;">
@@ -187,9 +193,15 @@
                                                @bind-Value="p.EditName"
                                                OnInput="@((ChangeEventArgs e) => p.EditName = e?.Value?.ToString())"
                                                @onkeyup="@(e => OnEnterUp(e, () => SavePlayer(p.Name)))"/>
+
+                                    @if (NameExists(p.EditName, p))
+                                    {
+                                        <div class="invalid-feedback d-block">Player name exists</div>
+                                    }
                                 </div>
 
                                 <Button Color="ButtonColor.Secondary" Class="me-2"
+                                        Disabled="@NameExists(NewPlayerName)"
                                         Title="Save" @onclick="@(() => SavePlayer(p.Name))">
                                     <Icon Name="IconName.Check2" />
                                 </Button>
@@ -317,7 +329,7 @@
             <div class="alert alert-warning d-flex align-items-center gap-2 mt-2 mb-0">
                 <strong class="me-1">Players skipping round:</strong>
                 <div class="d-flex flex-wrap gap-2">
-                        @string.Join(", ", SkippingPlayers.Select(x => x.Name))
+                    @string.Join(", ", SkippingPlayers.Select(NameFor))
                 </div>
             </div>
         </div>
@@ -381,6 +393,11 @@
 
     private static readonly Random _rng = new();
     private readonly Queue<Player> _skipQueue = new();
+
+    private bool NameExists(string proposed, Player? exclude = null) =>
+        Game.Players.Any(x =>
+            !ReferenceEquals(x, exclude) &&
+            string.Equals(x.Name, proposed, StringComparison.OrdinalIgnoreCase));
 
     protected override async Task OnInitializedAsync()
     {
@@ -469,7 +486,7 @@
     void AddPlayer()
     {
         var name = (NewPlayerName ?? string.Empty).Trim();
-        if (!string.IsNullOrWhiteSpace(name))
+        if (!string.IsNullOrWhiteSpace(name) && !NameExists(name))
         {
             Game.Players.Add(new Player(name, Game.Players.Count + 1));
             NewPlayerName = string.Empty;
@@ -496,10 +513,14 @@
             return;
         }
         var newName = p.EditName?.Trim() ?? p.Name;
-        if (!string.IsNullOrWhiteSpace(newName)) p.Name = newName;
-        p.IsEditing = false;
-        p.EditName = null;
-        ReindexPlayers();
+
+        if (!string.IsNullOrWhiteSpace(newName) && !NameExists(newName, p))
+        {
+            p.Name = newName;
+            p.IsEditing = false;
+            p.EditName = null;
+            ReindexPlayers();
+        }
     }
 
     void CancelEditPlayer(string name)
@@ -638,26 +659,38 @@
             }
         }
     }
-
     void CommitCurrentRound()
     {
-        foreach (var m in Game.Matches)
-        {
-            // Push to history for each player
-            foreach (var p in m.Team1) p.MatchHistory.Add(m);
-            foreach (var p in m.Team2) p.MatchHistory.Add(m);
+        // Determine the round being committed (latest round with matches)
+        if (!Game.Matches.Any()) return;
+        var round = Game.Matches.Max(m => m.Round);
+        var matchesThisRound = Game.Matches.Where(m => m.Round == round).ToList();
 
-            // Update per-player stats
-            foreach (var p in m.Team1) p.Points += m.Team1Points.Value;
-            foreach (var p in m.Team2) p.Points += m.Team2Points.Value;
+        // Normal per-match updates
+        foreach (var m in matchesThisRound)
+        {
+            foreach (var p in m.Team1) { p.MatchHistory.Add(m); p.Points += m.Team1Points.Value; }
+            foreach (var p in m.Team2) { p.MatchHistory.Add(m); p.Points += m.Team2Points.Value; }
 
             if (m.Team1Points > m.Team2Points)
                 foreach (var p in m.Team1) p.Wins += 1;
             else if (m.Team2Points > m.Team1Points)
                 foreach (var p in m.Team2) p.Wins += 1;
-            // ties => no Wins increment
         }
+
+        // --- Award points to skippers ---
+        var participated = matchesThisRound.SelectMany(m => m.Team1.Concat(m.Team2)).ToHashSet();
+        var skipPoints = (Game.ToPoints / 2) + 1;   // int math, e.g. 21 -> 10 + 1 = 11
+        foreach (var p in Game.Players.Where(p => !participated.Contains(p)))
+        {
+            p.Points += skipPoints;
+            // (no Wins increment)
+            // Optional: if you want to reflect this in history UI, you could
+            // add a synthetic "bye" entry mechanism; ask if you want that.
+        }
+
     }
+
 
     IEnumerable<string> IndividualNames(List<Player> team)
     {
@@ -710,13 +743,46 @@
     private int _finalRound = 0;
     private readonly Dictionary<Player, int> _finalPositions = new();
 
+    private List<Player> RankedForFinalDisplay()
+    {
+        var ranked = OrderPlayersForFinal(Game.Players).ToList();
+        if (_finalRound == 0) return ranked;
+
+        var finalists = Game.Matches
+            .Where(m => m.Round == _finalRound)
+            .SelectMany(m => m.Team1.Concat(m.Team2))
+            .ToHashSet();
+
+        // Finalists first (preserving ranking), skippers after (preserving ranking)
+        var finalistsInOrder = ranked.Where(finalists.Contains).ToList();
+        var skippersInOrder  = ranked.Where(p => !finalists.Contains(p)).ToList();
+
+        finalistsInOrder.AddRange(skippersInOrder);
+        return finalistsInOrder;
+    }
+
     private string NameFor(Match m, Player p)
     {
-        // Prefix only for the final round
-        if (m.Round == _finalRound && _finalPositions.TryGetValue(p, out var pos))
-            return $"#{pos} {p.Name}";
-        return p.Name;
+        if (_finalRound == 0 || m.Round != _finalRound) 
+            return p.Name;
+
+        var ranked = RankedForFinalDisplay();
+        var pos = ranked.FindIndex(x => ReferenceEquals(x, p));
+        if (pos < 0) pos = ranked.FindIndex(x => string.Equals(x.Name, p.Name, StringComparison.Ordinal));
+        return pos >= 0 ? $"#{pos + 1} {p.Name}" : p.Name;
     }
+
+    private string NameFor(Player p)
+    {
+        if (_finalRound == 0)
+            return p.Name;
+
+        var ranked = RankedForFinalDisplay();
+        var pos = ranked.FindIndex(x => ReferenceEquals(x, p));
+        if (pos < 0) pos = ranked.FindIndex(x => string.Equals(x.Name, p.Name, StringComparison.Ordinal));
+        return pos >= 0 ? $"#{pos + 1} {p.Name}" : p.Name;
+    }
+
 
     void GenerateFinalRoundMatches()
     {
