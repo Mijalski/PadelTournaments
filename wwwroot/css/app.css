@@ -25,6 +25,7 @@
     position: relative;
     background: url('/padel.png') center/cover no-repeat; /* swap per court if needed */
     border-radius: 14px;
+    aspect-ratio: 1.6;
     overflow: hidden;
 }
 

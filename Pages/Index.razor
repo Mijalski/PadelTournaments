@@ -241,93 +241,87 @@
                     <div class="col">
                         <div class="text-center fw-semibold fs-4 mb-2">@m.CourtName</div>
 
-                <div class="court court">
-                    <div class="court-grid">
-                        <!-- TOP LEFT -->
-                        <div class="grid-top-left">
-                            @if (Game.TeamFormat == TeamFormat.Pairs)
-                            {
-                                <div class="pill pill-dark">@m.Team1.Single().Name</div>
-                            }
-                            else
-                            {
-                                var names1 = IndividualNames(m.Team1).ToArray();
-                                <div class="pill pill-dark pill-sm">@names1[0]</div>
-                            }
-                        </div>
+                        <div class="court">
 
-                        <!-- TOP RIGHT -->
-                        <div class="grid-top-right">
-                            @if (Game.TeamFormat == TeamFormat.Pairs)
-                            {
-                                <div class="pill pill-dark">@m.Team2.Single().Name</div>
-                            }
-                            else
-                            {
-                                var names2 = IndividualNames(m.Team2).ToArray();
-                                <div class="stack">
-                                    <div class="pill pill-dark pill-sm">@names2[0]</div>
+                            <div class="court-grid">
+                                <!-- TOP LEFT -->
+                                <div class="grid-top-left">
+                                    @if (Game.TeamFormat == TeamFormat.Pairs)
+                                    {
+                                        <div class="pill pill-dark">@NameFor(m, m.Team1.Single())</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="pill pill-dark pill-sm">@NameFor(m, m.Team1[0])</div>
+                                    }
                                 </div>
-                            }
-                        </div>
 
-                        <!-- MID (SCORES) -->
-                        <div class="disc grid-mid-left"
-                             role="button" tabindex="0"
-                             @onclick="@(async () => await _scorePicker.ShowAsync(m, 1, Game.ToPoints))"
-                             @onkeyup="@(async e => { if (e.Key == "Enter") await _scorePicker.ShowAsync(m, 1, Game.ToPoints); })">
-                            @(m.Team1Points.HasValue ? m.Team1Points.Value.ToString() : "?")
-                        </div>
+                                <!-- TOP RIGHT -->
+                                <div class="grid-top-right">
+                                    @if (Game.TeamFormat == TeamFormat.Pairs)
+                                    {
+                                        <div class="pill pill-dark">@NameFor(m, m.Team2.Single())</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="stack">
+                                            <div class="pill pill-dark pill-sm">@NameFor(m, m.Team2[0])</div>
+                                        </div>
+                                    }
+                                </div>
 
-                        <div class="disc grid-mid-right"
-                             role="button" tabindex="0"
-                             @onclick="@(async () => await _scorePicker.ShowAsync(m, 2, Game.ToPoints))"
-                             @onkeyup="@(async e => { if (e.Key == "Enter") await _scorePicker.ShowAsync(m, 2, Game.ToPoints); })">
-                            @(m.Team2Points.HasValue ? m.Team2Points.Value.ToString() : "?")
-                        </div>
+                                <!-- MID (SCORES) -->
+                                <div class="disc grid-mid-left"
+                                     role="button" tabindex="0"
+                                     @onclick="@(async () => await _scorePicker.ShowAsync(m, 1, Game.ToPoints))"
+                                     @onkeyup="@(async e => { if (e.Key == "Enter") await _scorePicker.ShowAsync(m, 1, Game.ToPoints); })">
+                                    @(m.Team1Points.HasValue ? m.Team1Points.Value.ToString() : "?")
+                                </div>
 
-                        <!-- BOTTOM LEFT -->
+                                <div class="disc grid-mid-right"
+                                     role="button" tabindex="0"
+                                     @onclick="@(async () => await _scorePicker.ShowAsync(m, 2, Game.ToPoints))"
+                                     @onkeyup="@(async e => { if (e.Key == "Enter") await _scorePicker.ShowAsync(m, 2, Game.ToPoints); })">
+                                    @(m.Team2Points.HasValue ? m.Team2Points.Value.ToString() : "?")
+                                </div>
 
-                        @if (Game.TeamFormat == TeamFormat.Individual)
-                        {
-                            <div class="grid-bot-left">
-                                @{
-                                    var names1 = IndividualNames(m.Team1).ToArray();
-                                    <div class="stack">
-                                        <div class="pill pill-dark pill-sm">@names1[1]</div>
+                                <!-- BOTTOM LEFT -->
+
+                                @if (Game.TeamFormat == TeamFormat.Individual)
+                                {
+                                    <div class="grid-bot-left">
+                                        @{
+                                            <div class="stack">
+                                                <div class="pill pill-dark pill-sm">@NameFor(m, m.Team1[1])</div>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <!-- BOTTOM RIGHT -->
+                                    <div class="grid-bot-right">
+                                        @{
+                                            <div class="stack">
+                                                <div class="pill pill-dark pill-sm">@NameFor(m, m.Team2[1])</div>
+                                            </div>
+                                        }
                                     </div>
                                 }
                             </div>
-
-                            <!-- BOTTOM RIGHT -->
-                            <div class="grid-bot-right">
-                                @{
-                                    var names2 = IndividualNames(m.Team2).ToArray();
-                                    <div class="stack">
-                                        <div class="pill pill-dark pill-sm">@names2[1]</div>
-                                    </div>
-                                }
-                            </div>
-                        }
-                    </div>
-                </div>
+                        </div>
             </div>
-            @if (SkippingPlayers.Count > 0)
-            {
-                <div class="col-12">
-                    <div class="alert alert-warning d-flex align-items-center gap-2 mt-2 mb-0">
-                        <strong class="me-1">Players skipping round:</strong>
-                        <div class="d-flex flex-wrap gap-2">
-                            @foreach (var p in SkippingPlayers)
-                            {
-                                @p.Name
-                            }
-                        </div>
-                    </div>
-                </div>
-            }
         }
     </div>
+    @if (SkippingPlayers.Count > 0)
+    {
+        <div class="col-12">
+            <div class="alert alert-warning d-flex align-items-center gap-2 mt-2 mb-0">
+                <strong class="me-1">Players skipping round:</strong>
+                <div class="d-flex flex-wrap gap-2">
+                        @string.Join(", ", SkippingPlayers.Select(x => x.Name))
+                </div>
+            </div>
+        </div>
+    }
 }
 
         <div class="d-flex justify-content-center my-4 gap-2">
@@ -718,10 +712,32 @@
         StateHasChanged();
     }
 
+    private int _finalRound = 0;
+    private readonly Dictionary<Player, int> _finalPositions = new();
+
+    private string NameFor(Match m, Player p)
+    {
+        // Prefix only for the final round
+        if (m.Round == _finalRound && _finalPositions.TryGetValue(p, out var pos))
+            return $"#{pos} {p.Name}";
+        return p.Name;
+    }
+
     void GenerateFinalRoundMatches()
     {
+        // (Optional) guard: require latest round to be complete
+        var latestRound = Game.Matches.Any() ? Game.Matches.Max(m => m.Round) : 0;
+        var latestRoundMatches = Game.Matches.Where(m => m.Round == latestRound).ToList();
+        if (latestRound > 0 && latestRoundMatches.Any() && latestRoundMatches.Any(m => m.Team1Points + m.Team2Points != Game.ToPoints))
+            return;
+
+        var nextRound = Game.Matches.Any() ? Game.Matches.Max(m => m.Round) + 1 : 1;
+
         var ranked = OrderPlayersForFinal(Game.Players).ToList();
         if (ranked.Count < 4) return;
+
+        // Build final matches (your existing logic)
+        var finalMatches = new List<Match>();
 
         if (Game.TeamFormat == TeamFormat.Individual)
         {
@@ -734,12 +750,12 @@
                 _ => (new[] { ranked[0], ranked[1] }, new[] { ranked[2], ranked[3] })
             };
 
-            var m = new Match { Round = Game.CurrentRound, CourtName = court.Name };
+            var m = new Match { Round = nextRound, CourtName = court.Name };
             m.Team1.AddRange(t1);
             m.Team2.AddRange(t2);
-            Game.Matches.Add(m);
+            finalMatches.Add(m);
         }
-        else // Pairs → doubles blocks (1&2) vs (3&4), (5&6) vs (7&8), ...
+        else // TeamFormat.Pairs -> doubles blocks: (1&2) vs (3&4), (5&6) vs (7&8), ...
         {
             int block = 0;
             for (int c = 0; c < Game.Courts.Count; c++)
@@ -747,15 +763,39 @@
                 int i = block * 4;
                 if (i + 3 >= ranked.Count) break;
 
-                var m = new Match { Round = Game.CurrentRound, CourtName = Game.Courts[c].Name };
+                var m = new Match { Round = nextRound, CourtName = Game.Courts[c].Name };
                 m.Team1.Add(ranked[i + 0]); m.Team1.Add(ranked[i + 1]);
                 m.Team2.Add(ranked[i + 2]); m.Team2.Add(ranked[i + 3]);
-                Game.Matches.Add(m);
-
+                finalMatches.Add(m);
                 block++;
             }
         }
+
+        // Append the new matches
+        foreach (var m in finalMatches) Game.Matches.Add(m);
+
+        // === Build final positions ===
+        _finalPositions.Clear();
+        _finalRound = nextRound;
+
+        // Players actually playing in the finals, in ranked order
+        var finalists = finalMatches
+            .SelectMany(m => m.Team1.Concat(m.Team2))
+            .Distinct()
+            .OrderBy(p => ranked.IndexOf(p))
+            .ToList();
+
+        // Players not in finals (skipping) – also keep their ranked order, but list them AFTER finalists
+        var skipping = ranked.Where(p => !finalists.Contains(p)).ToList();
+
+        // Assign positions: finalists first, then skippers
+        int pos = 1;
+        foreach (var p in finalists) _finalPositions[p] = pos++;
+        foreach (var p in skipping) _finalPositions[p] = pos++;
+
+        Game.CurrentRound = nextRound;
     }
+
 
     IEnumerable<Player> OrderPlayersForFinal(IEnumerable<Player> players)
     {
