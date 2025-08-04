@@ -58,13 +58,25 @@
 
                                     @if (view == ViewMode.Detailed)
                                     {
-                                        @for (var r = 1; r <= MaxRound; r++)
+                                        @for (int r = 1; r <= MaxRound; r++)
                                         {
-                                            var pts = row.PointsByRound.TryGetValue(r, out var p) ? p : 0;
+                                            var pts = row.PointsByRound.GetValueOrDefault(r, 0);
                                             var isWin = row.WinsByRound.TryGetValue(r, out var w) && w;
+                                            var isBye = row.ByeByRound.TryGetValue(r, out var b) && b;
 
-                                            <td class="text-center font-mono @(isWin ? "fw-bold" : null)">
-                                                @pts
+                                            <td class="text-center font-mono @(isWin && !isBye ? "fw-bold" : null)">
+                                                @if (pts == 0)
+                                                {
+                                                    @pts
+                                                }
+                                                else if (isBye)
+                                                {
+                                                    <span>(@pts)</span>
+                                                }
+                                                else
+                                                {
+                                                    @pts
+                                                }
                                             </td>
                                         }
                                     }
@@ -102,8 +114,9 @@
     {
         public string Name { get; init; } = "";
         public Player Player { get; init; } = default!;
-        public Dictionary<int, int> PointsByRound { get; } = new(); // round -> pts
-        public Dictionary<int, bool> WinsByRound { get; } = new(); // round -> won?
+        public Dictionary<int,int> PointsByRound { get; } = new(); // round -> pts
+        public Dictionary<int,bool>  WinsByRound { get; } = new(); // round -> won?
+        public Dictionary<int,bool>  ByeByRound  { get; } = new(); // round -> is bye?
         public int Total { get; set; }
         public int Wins { get; set; }
         public int Position { get; set; }
@@ -124,13 +137,9 @@
         MaxRound = Matches.Any() ? Matches.Max(m => m.Round) : 0;
         if (MaxRound == 0) return;
 
-        // Build lookup of players -> row
-        var allPlayers = Players?.ToList() ?? [];
+        var allPlayers = Players?.ToList() ?? new();
         if (!allPlayers.Any())
-        {
-            // fallback: infer from matches
             allPlayers = Matches.SelectMany(m => m.Team1.Concat(m.Team2)).Distinct().ToList();
-        }
 
         var map = new Dictionary<Player, RowModel>();
         foreach (var p in allPlayers)
@@ -138,31 +147,43 @@
 
         foreach (var m in Matches)
         {
-            // we consider all saved rounds; if you want only past rounds, filter here (m.Round < latest)
-            var team1 = m.Team1.ToHashSet();
-            var team2 = m.Team2.ToHashSet();
-            bool t1win = m.Team1Points > m.Team2Points;
-            bool t2win = m.Team2Points > m.Team1Points;
+            bool isByeMatch = string.Equals(m.CourtName, "BYE", StringComparison.OrdinalIgnoreCase) || m.Team2.Count == 0;
 
-            foreach (var p in team1)
+            if (!isByeMatch)
             {
-                if (!map.TryGetValue(p, out var row)) { row = new RowModel { Name = p.Name, Player = p }; map[p] = row; }
-                AddRound(row, m.Round, m.Team1Points ?? 0, t1win);
+                bool t1win = m.Team1Points > m.Team2Points;
+                bool t2win = m.Team2Points > m.Team1Points;
+
+                foreach (var p in m.Team1)
+                {
+                    if (!map.TryGetValue(p, out var row)) { row = new RowModel { Name = p.Name, Player = p }; map[p] = row; }
+                    AddRound(row, m.Round, m.Team1Points ?? 0, t1win, isBye: false);
+                }
+                foreach (var p in m.Team2)
+                {
+                    if (!map.TryGetValue(p, out var row)) { row = new RowModel { Name = p.Name, Player = p }; map[p] = row; }
+                    AddRound(row, m.Round, m.Team2Points ?? 0, t2win, isBye: false);
+                }
             }
-            foreach (var p in team2)
+            else
             {
-                if (!map.TryGetValue(p, out var row)) { row = new RowModel { Name = p.Name, Player = p }; map[p] = row; }
-                AddRound(row, m.Round, m.Team2Points ?? 0, t2win);
+                // BYE: only Team1 has the player/points; never a win
+                foreach (var p in m.Team1)
+                {
+                    if (!map.TryGetValue(p, out var row)) { row = new RowModel { Name = p.Name, Player = p }; map[p] = row; }
+                    AddRound(row, m.Round, m.Team1Points ?? 0, win:false, isBye:true);
+                }
             }
         }
 
         Rows = map.Values.ToList();
     }
 
-    static void AddRound(RowModel row, int round, int pts, bool win)
+    static void AddRound(RowModel row, int round, int pts, bool win, bool isBye)
     {
-        row.PointsByRound[round] = (row.PointsByRound.TryGetValue(round, out var existing) ? existing : 0) + pts;
-        row.WinsByRound[round] = win; // if a player appears once per round this is fine
+        row.PointsByRound[round] = pts;
+        row.WinsByRound[round]   = win;
+        row.ByeByRound[round]    = isBye;
         row.Total += pts;
         if (win) row.Wins += 1;
     }

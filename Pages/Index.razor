@@ -173,12 +173,12 @@
 
                         <Button Color="ButtonColor.Primary" @onclick="AddPlayer" Disabled="@NameExists(NewPlayerName)">Add</Button>
                     </div>
-
-                    @if (NameExists(NewPlayerName))
-                    {
-                        <div class="invalid-feedback d-block">Player name exists</div>
-                    }
                 </div>
+
+                @if (NameExists(NewPlayerName))
+                {
+                    <div class="invalid-feedback d-block">Player name exists</div>
+                }
 
                 <ol class="list-unstyled mb-0 d-inline-block text-start w-100" style="max-width: 560px;">
                     @foreach (var p in Game.Players)
@@ -581,7 +581,7 @@
         // Optional guard: finish latest round
         var latestRound = Game.Matches.Any() ? Game.Matches.Max(m => m.Round) : 0;
         var latestMatches = Game.Matches.Where(m => m.Round == latestRound).ToList();
-        if (latestRound > 0 && latestMatches.Any() && latestMatches.Any(m => m.Team1Points + m.Team2Points != Game.ToPoints))
+        if (latestRound > 0 && latestMatches.Any() && latestMatches.Any(m => m.Team1Points + m.Team2Points == 0))
             return;
 
         // --- Round-robin skipper selection ---
@@ -659,14 +659,15 @@
             }
         }
     }
+
     void CommitCurrentRound()
     {
-        // Determine the round being committed (latest round with matches)
         if (!Game.Matches.Any()) return;
+
         var round = Game.Matches.Max(m => m.Round);
         var matchesThisRound = Game.Matches.Where(m => m.Round == round).ToList();
 
-        // Normal per-match updates
+        // Regular per-match updates
         foreach (var m in matchesThisRound)
         {
             foreach (var p in m.Team1) { p.MatchHistory.Add(m); p.Points += m.Team1Points.Value; }
@@ -678,28 +679,30 @@
                 foreach (var p in m.Team2) p.Wins += 1;
         }
 
-        // --- Award points to skippers ---
+        // --- Award points to skippers and add BYE matches to history ---
         var participated = matchesThisRound.SelectMany(m => m.Team1.Concat(m.Team2)).ToHashSet();
-        var skipPoints = (Game.ToPoints / 2) + 1;   // int math, e.g. 21 -> 10 + 1 = 11
-        foreach (var p in Game.Players.Where(p => !participated.Contains(p)))
+        var skippers = Game.Players.Where(p => !participated.Contains(p)).ToList();
+        var skipPoints = (Game.ToPoints / 2) + 1;
+
+        foreach (var p in skippers)
         {
+            // Update stats
             p.Points += skipPoints;
-            // (no Wins increment)
-            // Optional: if you want to reflect this in history UI, you could
-            // add a synthetic "bye" entry mechanism; ask if you want that.
+
+            // Add a synthetic BYE match so HistoryModal can pick it up
+            var bye = new Match
+            {
+                Round = round,
+                CourtName = "BYE",
+                Team1Points = skipPoints,
+                Team2Points = 0
+            };
+            bye.Team1.Add(p);
+            // Team2 left empty on purpose
+
+            p.MatchHistory.Add(bye);
+            Game.Matches.Add(bye);
         }
-
-    }
-
-
-    IEnumerable<string> IndividualNames(List<Player> team)
-    {
-        return team.Count switch
-        {
-            0 => ["?", "?"],
-            1 => [team[0].Name, "?"],
-            _ => new[] { team[0].Name, team[1].Name }
-        };
     }
 
     private void OnScorePicked(ScorePicker.ScorePickArgs e)
@@ -789,7 +792,7 @@
         // (Optional) guard: require latest round to be complete
         var latestRound = Game.Matches.Any() ? Game.Matches.Max(m => m.Round) : 0;
         var latestRoundMatches = Game.Matches.Where(m => m.Round == latestRound).ToList();
-        if (latestRound > 0 && latestRoundMatches.Any() && latestRoundMatches.Any(m => m.Team1Points + m.Team2Points != Game.ToPoints))
+        if (latestRound > 0 && latestRoundMatches.Any() && latestRoundMatches.Any(m => m.Team1Points + m.Team2Points == 0))
             return;
 
         var nextRound = Game.Matches.Any() ? Game.Matches.Max(m => m.Round) + 1 : 1;
@@ -890,14 +893,14 @@
     }
 
     bool AllScoresFilled()
-        => Game.Matches.All(m => (m.Team1Points + m.Team2Points) == Game.ToPoints);
+        => Game.Matches.All(m => (m.Team1Points + m.Team2Points) > 0);
 
     IEnumerable<Match> CurrentRoundMatches()
         => Game.Matches.Where(m => m.Round == Game.CurrentRound);
 
     bool AllScoresFilledThisRound()
         => CurrentRoundMatches().Any() &&
-           CurrentRoundMatches().All(m => (m.Team1Points + m.Team2Points) == Game.ToPoints);
+           CurrentRoundMatches().All(m => (m.Team1Points + m.Team2Points) > 0);
 
     bool BaseReady()
         => Game.Courts.Count >= 1 && Game.Players.Count >= (Game.TeamFormat == TeamFormat.Pairs ? 2 : 4);
