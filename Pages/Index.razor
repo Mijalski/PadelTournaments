@@ -1,6 +1,8 @@
 @page "/"
+@using System.Text.Json
 @using BlazorBootstrap
 @using PadelTournamentManager.Models.Enums
+@inject IJSRuntime JS
 
 <!-- Fullscreen, oversized, rotated 🎾 background -->
 <div class="bg-emoji-fixed" aria-hidden="true"></div>
@@ -219,6 +221,10 @@
                         </li>
                     }
                 </ol>
+                <CapacityAlert
+                    CourtsCount="@Game.Courts.Count"
+                    PlayersCount="@Game.Players.Count"
+                    TeamFormat="@Game.TeamFormat" />
             </CardBody>
         </Card>
             
@@ -227,15 +233,15 @@
 @{
     var roundMatches = CurrentRoundMatches().ToList();
 }
-        @if (ShowMatches && roundMatches.Any())
+@if (ShowMatches && roundMatches.Any())
 {
-    <div class="row g-4">
+            <div class="row g-4 @CourtGridClasses(roundMatches.Count)">
                 @foreach (var m in roundMatches)
-        {
-            <div class="col-lg-6">
-                <div class="text-center fw-semibold fs-3 mb-2">@m.CourtName</div>
+                {
+                    <div class="col">
+                        <div class="text-center fw-semibold fs-4 mb-2">@m.CourtName</div>
 
-                <div class="court">
+                <div class="court court">
                     <div class="court-grid">
                         <!-- TOP LEFT -->
                         <div class="grid-top-left">
@@ -281,7 +287,7 @@
                         </div>
 
                         <!-- BOTTOM LEFT -->
-                                
+
                         @if (Game.TeamFormat == TeamFormat.Individual)
                         {
                             <div class="grid-bot-left">
@@ -306,6 +312,20 @@
                     </div>
                 </div>
             </div>
+            @if (SkippingPlayers.Count > 0)
+            {
+                <div class="col-12">
+                    <div class="alert alert-warning d-flex align-items-center gap-2 mt-2 mb-0">
+                        <strong class="me-1">Players skipping round:</strong>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var p in SkippingPlayers)
+                            {
+                                @p.Name
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
         }
     </div>
 }
@@ -345,6 +365,7 @@
     private ScorePicker _scorePicker = default!;
     private HistoryModal _historyModal = default!;
     private Game Game { get; set; } = new();
+    IJSObjectReference? _storageModule;
 
     // Radio bindings (map bool <-> string for Blazor.Bootstrap RadioInput)
     private bool IsAmericano { get => Game.TournamentType == TournamentType.Americano; set { if (value) Game.TournamentType = TournamentType.Americano; } }
@@ -366,11 +387,20 @@
 
     private static readonly Random _rng = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        base.OnInitialized();
-        Game.Courts = [new Court("Court 1", 1), new Court("Court 2", 2)];
+        await base.OnInitializedAsync();
+        await EnsureStorageAsync();
         Game.Players = [new Player("Dominik P", 1), new Player("Hajzen", 2), new Player("Hubert", 3), new Player("Pan Krzysztof", 4),];
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadConfigAsync(); // silently load if available
+            StateHasChanged();
+        }
     }
 
     void AddCourt()
@@ -381,6 +411,7 @@
             Game.Courts.Add(new Court(name, Game.Courts.Count + 1));
             NewCourtName = string.Empty;
         }
+        _ = SaveConfigAsync();
     }
 
     void RemoveCourtByOrder(int order)
@@ -391,6 +422,7 @@
             Game.Courts.Remove(found);
         }
         ReindexCourts(order);
+        _ = SaveConfigAsync();
     }
 
     void EditCourtByOrder(int order)
@@ -402,6 +434,7 @@
         }
         c.EditName = c.Name;
         c.IsEditing = true;
+        _ = SaveConfigAsync();
     }
 
     void SaveCourt(int order)
@@ -416,6 +449,7 @@
         c.IsEditing = false;
         c.EditName = null;
         ReindexPlayers();
+        _ = SaveConfigAsync();
     }
 
     void CancelEditCourt(int order)
@@ -506,6 +540,10 @@
 
     void NextRound()
     {
+        if (Game.CurrentRound == 0)
+        {
+            _ = SaveConfigAsync();
+        }
         Game.CurrentRound++;
         // If there are current matches, require completion and commit them first
         if (Game.Matches.Count > 0)
@@ -761,4 +799,64 @@
 
     bool CanGoFinal
         => BaseReady() && ( !CurrentRoundMatches().Any() || AllScoresFilledThisRound()) && Game.CurrentRound > 0;
+
+    
+    async Task EnsureStorageAsync()
+        => _storageModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "./appStorage.js");
+
+    async Task SaveConfigAsync()
+    {
+        await EnsureStorageAsync();
+        var dto = GameConfigDto.FromGame(Game);
+        var json = JsonSerializer.Serialize(dto);
+        await _storageModule.InvokeVoidAsync("set", GameConfigDto.GameConfigKey, json);
+    }
+
+    async Task<bool> LoadConfigAsync()
+    {
+        await EnsureStorageAsync();
+        var json = await _storageModule.InvokeAsync<string?>("get", GameConfigDto.GameConfigKey);
+        if (string.IsNullOrWhiteSpace(json)) return false;
+
+        try
+        {
+            var dto = JsonSerializer.Deserialize<GameConfigDto>(json);
+            if (dto is null) return false;
+            dto.ApplyTo(Game);
+
+            // If you show the current round view, you might keep Game.CurrentRound; do not touch Matches/Players
+            StateHasChanged();
+            return true;
+        }
+        catch { return false; }
+    }
+
+    async Task ClearConfigAsync()
+    {
+        await EnsureStorageAsync();
+        await _storageModule.InvokeVoidAsync("remove", GameConfigDto.GameConfigKey);
+    }
+    
+    private IReadOnlyList<Player> SkippingPlayers => GetSkippingPlayers(Game.CurrentRound);
+
+    private IReadOnlyList<Player> GetSkippingPlayers(int round)
+    {
+        var inRound = Game.Matches
+            .Where(m => m.Round == round)
+            .SelectMany(m => m.Team1.Concat(m.Team2))
+            .ToHashSet();
+
+        return Game.Players
+            .Where(p => !inRound.Contains(p))
+            .OrderBy(p => p.Order)
+            .ThenBy(p => p.Name)
+            .ToList();
+    }
+
+    string CourtGridClasses(int count) => count switch
+    {
+        4 => "row-cols-1 row-cols-md-2",   // 2 by 2 on md+ screens
+        6 => "row-cols-1 row-cols-lg-3",   // 3 per row on lg+ screens
+        _ => "row-cols-1 row-cols-md-2 row-cols-xl-3" // default responsive
+    };
 }

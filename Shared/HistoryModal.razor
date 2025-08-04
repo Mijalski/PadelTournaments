@@ -4,11 +4,15 @@
     <HeaderTemplate>
         <div class="d-flex w-100 align-items-center">
             <div class="fw-semibold">Previous matches</div>
-            <div class="ms-auto">
-                <div class="btn-group">
-                    <Button Color="ButtonColor.Light" Class="@((view == ViewMode.Detailed) ? "active" : null)" @onclick="(() => view = ViewMode.Detailed)">DETAILED</Button>
-                    <Button Color="ButtonColor.Light" Class="@((view == ViewMode.Summary) ? "active" : null)" @onclick="(() => view = ViewMode.Summary)">SUMMARY</Button>
-                </div>
+            <div class="ms-auto btn-group">
+                <button class="btn btn-sm @(view == ViewMode.Detailed ? "btn-primary" : "btn-outline-primary")"
+                        @onclick="(() => view = ViewMode.Detailed)">
+                    DETAILED
+                </button>
+                <button class="btn btn-sm @(view == ViewMode.Summary ? "btn-primary" : "btn-outline-primary")"
+                        @onclick="(() => view = ViewMode.Summary)">
+                    SUMMARY
+                </button>
             </div>
         </div>
     </HeaderTemplate>
@@ -20,66 +24,64 @@
         }
         else
         {
-            <div class="table-responsive">
-                <table class="table table-sm align-middle mb-0 history-table">
-                    <thead>
-                        <tr>
-                            <th style="width:64px;">Pos</th>
-                            <th>Player</th>
-
-                            @if (view == ViewMode.Detailed)
-                            {
-                                @for (int r = 1; r <= MaxRound; r++)
-                                {
-                                    <th class="text-center">Round @r</th>
-                                }
-                            }
-
-                            <th class="text-end" style="width:96px;">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var row in SortedRows)
-                        {
+            <div class="history-wrap">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover table-striped align-middle mb-0 history-table">
+                        <thead class="bg-header">
                             <tr>
-                                <td>@row.Position</td>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span>@row.Name</span>
-                                        @* optional small edit icon placeholder
-                                        <i class="bi bi-pencil-square text-muted"></i> *@
-                                    </div>
-                                </td>
+                                <th class="col-pos">#</th>
+                                <th>Player</th>
 
                                 @if (view == ViewMode.Detailed)
                                 {
                                     @for (int r = 1; r <= MaxRound; r++)
                                     {
-                                        var pts = row.PointsByRound.TryGetValue(r, out var p) ? p : 0;
-                                        var isWin = row.WinsByRound.TryGetValue(r, out var w) && w;
-
-                                        <td class="text-center @(isWin ? "fw-bold" : null)">
-                                            @pts
-                                        </td>
+                                        <th class="text-center">Round @r</th>
                                     }
                                 }
 
-                                <td class="text-end fw-semibold">@row.Total</td>
+                                <th class="text-end col-total">Total</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in SortedRows)
+                            {
+                                <tr>
+                                    <td class="text-muted">@row.Position</td>
+                                    <td class="fw-medium">
+                                        @if (row.Position == 1)
+                                        {
+                                            <span class="me-2" title="Leader">🏆</span>
+                                        }
+                                        @row.Name
+                                    </td>
+
+                                    @if (view == ViewMode.Detailed)
+                                    {
+                                        @for (int r = 1; r <= MaxRound; r++)
+                                        {
+                                            var pts = row.PointsByRound.TryGetValue(r, out var p) ? p : 0;
+                                            var isWin = row.WinsByRound.TryGetValue(r, out var w) && w;
+
+                                            <td class="text-center font-mono @(isWin ? "fw-bold" : null)">
+                                                @pts
+                                            </td>
+                                        }
+                                    }
+
+                                    <td class="text-end">
+                                        <span class="badge rounded-pill text-bg-primary px-3 py-2">@row.Total</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
         }
     </BodyTemplate>
-
-    <FooterTemplate>
-        <div class="d-flex w-100 justify-content-between small text-muted">
-            <span>Rounds: @MaxRound</span>
-            <Button Color="ButtonColor.Link" @onclick="Close">Close</Button>
-        </div>
-    </FooterTemplate>
 </Modal>
+
 
 @code {
     // Inputs

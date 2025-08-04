@@ -128,11 +128,56 @@
     outline: none;
 }
 
-.history-table thead th {
+/* Card-like frame inside the modal */
+.history-wrap {
+    border: 1px solid var(--bs-border-color);
+    border-radius: .75rem;
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.08);
+    overflow: hidden;
+}
+
+/* Sticky, clean header */
+.history-table thead.bg-header th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--bs-light);
+    border-bottom: 1px solid var(--bs-border-color);
     white-space: nowrap;
 }
 
-.history-table tbody td,
-.history-table thead th {
-    vertical-align: middle;
+/* Tight column widths */
+.col-pos {
+    width: 64px;
+}
+
+.col-total {
+    width: 96px;
+}
+
+/* Numbers look better monospaced */
+.font-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+/* Make striped rows a bit softer */
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+    background-color: rgba(var(--bs-primary-rgb), .02);
+}
+.court-imgwrap {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 20px rgba(0,0,0,.12);
+}
+
+.court-img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+/* no cropping, respects real ratio */
+.court-overlay {
+    position: absolute;
+    inset: 0;
 }

@@ -1,0 +1,52 @@
+@namespace PadelTournamentManager.Components
+@using System
+@using PadelTournamentManager.Models.Enums
+
+@code {
+    [Parameter] public int CourtsCount { get; set; }
+    [Parameter] public int PlayersCount { get; set; }
+    [Parameter] public TeamFormat TeamFormat { get; set; }
+
+    int PlayersPerMatch => TeamFormat == TeamFormat.Pairs ? 2 : 4;
+
+    (int MatchesPossible, int PlayersPlaying, int PlayersSkipping) GetRoundCapacity()
+    {
+        int courts = CourtsCount;
+        int n = PlayersCount;
+        int ppm = PlayersPerMatch;
+
+        if (courts <= 0) return (0, 0, n);   // no courts -> everyone skips
+        if (n < ppm)     return (0, 0, n);   // not enough for one match
+
+        int matches = Math.Min(courts, n / ppm);
+        int playing = matches * ppm;
+        int skipping = Math.Max(0, n - playing);
+        return (matches, playing, skipping);
+    }
+}
+
+@* ---------- UI ---------- *@
+@{
+    var cap = GetRoundCapacity();
+}
+
+@if (CourtsCount == 0)
+{
+    <div class="alert alert-danger mt-3 mb-0">
+        Add at least <strong>one court</strong> to start scheduling.
+    </div>
+}
+else if (PlayersCount < PlayersPerMatch)
+{
+    <div class="alert alert-warning mt-3 mb-0">
+        Need at least <strong>@PlayersPerMatch</strong> player(s) for a round
+        (current: @PlayersCount).
+    </div>
+}
+else if (cap.PlayersSkipping > 0)
+{
+    <div class="alert alert-warning mt-3 mb-0">
+        With <strong>@CourtsCount</strong> court(s) and <strong>@PlayersCount</strong> players,
+        <strong>@cap.PlayersSkipping</strong> player(s) will skip each round.
+    </div>
+}
