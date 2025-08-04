@@ -127,3 +127,12 @@
 .kb-capture {
     outline: none;
 }
+
+.history-table thead th {
+    white-space: nowrap;
+}
+
+.history-table tbody td,
+.history-table thead th {
+    vertical-align: middle;
+}

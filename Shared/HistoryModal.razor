@@ -1,0 +1,167 @@
+﻿@using BlazorBootstrap
+
+<Modal @ref="_modal" Title="Previous matches" IsVerticallyCentered="true" Size="ModalSize.Large">
+    <HeaderTemplate>
+        <div class="d-flex w-100 align-items-center">
+            <div class="fw-semibold">Previous matches</div>
+            <div class="ms-auto">
+                <div class="btn-group">
+                    <Button Color="ButtonColor.Light" Class="@((view == ViewMode.Detailed) ? "active" : null)" @onclick="(() => view = ViewMode.Detailed)">DETAILED</Button>
+                    <Button Color="ButtonColor.Light" Class="@((view == ViewMode.Summary) ? "active" : null)" @onclick="(() => view = ViewMode.Summary)">SUMMARY</Button>
+                </div>
+            </div>
+        </div>
+    </HeaderTemplate>
+
+    <BodyTemplate>
+        @if (Rows.Count == 0 || MaxRound == 0)
+        {
+            <div class="text-muted">No previous matches yet.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0 history-table">
+                    <thead>
+                        <tr>
+                            <th style="width:64px;">Pos</th>
+                            <th>Player</th>
+
+                            @if (view == ViewMode.Detailed)
+                            {
+                                @for (int r = 1; r <= MaxRound; r++)
+                                {
+                                    <th class="text-center">Round @r</th>
+                                }
+                            }
+
+                            <th class="text-end" style="width:96px;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in SortedRows)
+                        {
+                            <tr>
+                                <td>@row.Position</td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span>@row.Name</span>
+                                        @* optional small edit icon placeholder
+                                        <i class="bi bi-pencil-square text-muted"></i> *@
+                                    </div>
+                                </td>
+
+                                @if (view == ViewMode.Detailed)
+                                {
+                                    @for (int r = 1; r <= MaxRound; r++)
+                                    {
+                                        var pts = row.PointsByRound.TryGetValue(r, out var p) ? p : 0;
+                                        var isWin = row.WinsByRound.TryGetValue(r, out var w) && w;
+
+                                        <td class="text-center @(isWin ? "fw-bold" : null)">
+                                            @pts
+                                        </td>
+                                    }
+                                }
+
+                                <td class="text-end fw-semibold">@row.Total</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </BodyTemplate>
+
+    <FooterTemplate>
+        <div class="d-flex w-100 justify-content-between small text-muted">
+            <span>Rounds: @MaxRound</span>
+            <Button Color="ButtonColor.Link" @onclick="Close">Close</Button>
+        </div>
+    </FooterTemplate>
+</Modal>
+
+@code {
+    // Inputs
+    [Parameter] public IEnumerable<Match> Matches { get; set; } = Enumerable.Empty<Match>();
+    [Parameter] public IEnumerable<Player> Players { get; set; } = Enumerable.Empty<Player>();
+
+    // Modal API
+    private Modal _modal = default!;
+    public async Task ShowAsync() { Rebuild(); await _modal.ShowAsync(); }
+    public async Task Close() => await _modal.HideAsync();
+
+    // View toggle
+    enum ViewMode { Detailed, Summary }
+    ViewMode view = ViewMode.Detailed;
+
+    // Computed model for rows
+    class RowModel
+    {
+        public string Name { get; init; } = "";
+        public Player Player { get; init; } = default!;
+        public Dictionary<int, int> PointsByRound { get; } = new(); // round -> pts
+        public Dictionary<int, bool> WinsByRound { get; } = new(); // round -> won?
+        public int Total { get; set; }
+        public int Wins { get; set; }
+        public int Position { get; set; }
+    }
+
+    List<RowModel> Rows { get; set; } = new();
+    int MaxRound { get; set; }
+
+    IEnumerable<RowModel> SortedRows =>
+        Rows.OrderByDescending(r => r.Total)
+            .ThenByDescending(r => r.Wins)
+            .ThenBy(r => r.Name)
+            .Select((r, i) => { r.Position = i + 1; return r; });
+
+    void Rebuild()
+    {
+        Rows.Clear();
+        MaxRound = Matches.Any() ? Matches.Max(m => m.Round) : 0;
+        if (MaxRound == 0) return;
+
+        // Build lookup of players -> row
+        var allPlayers = Players?.ToList() ?? new();
+        if (!allPlayers.Any())
+        {
+            // fallback: infer from matches
+            allPlayers = Matches.SelectMany(m => m.Team1.Concat(m.Team2)).Distinct().ToList();
+        }
+
+        var map = new Dictionary<Player, RowModel>();
+        foreach (var p in allPlayers)
+            map[p] = new RowModel { Name = p.Name, Player = p };
+
+        foreach (var m in Matches)
+        {
+            // we consider all saved rounds; if you want only past rounds, filter here (m.Round < latest)
+            var team1 = m.Team1.ToHashSet();
+            var team2 = m.Team2.ToHashSet();
+            bool t1win = m.Team1Points > m.Team2Points;
+            bool t2win = m.Team2Points > m.Team1Points;
+
+            foreach (var p in team1)
+            {
+                if (!map.TryGetValue(p, out var row)) { row = new RowModel { Name = p.Name, Player = p }; map[p] = row; }
+                AddRound(row, m.Round, m.Team1Points ?? 0, t1win);
+            }
+            foreach (var p in team2)
+            {
+                if (!map.TryGetValue(p, out var row)) { row = new RowModel { Name = p.Name, Player = p }; map[p] = row; }
+                AddRound(row, m.Round, m.Team2Points ?? 0, t2win);
+            }
+        }
+
+        Rows = map.Values.ToList();
+    }
+
+    static void AddRound(RowModel row, int round, int pts, bool win)
+    {
+        row.PointsByRound[round] = (row.PointsByRound.TryGetValue(round, out var existing) ? existing : 0) + pts;
+        row.WinsByRound[round] = win; // if a player appears once per round this is fine
+        row.Total += pts;
+        if (win) row.Wins += 1;
+    }
+}

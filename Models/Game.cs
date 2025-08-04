@@ -23,5 +23,5 @@ public class Game
 
     public List<Match> Matches { get; set; } = new();
 
-    public int CurrentRound { get; set; } = 1;
+    public int CurrentRound { get; set; } = 0;
 }

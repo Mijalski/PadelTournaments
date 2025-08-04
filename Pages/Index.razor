@@ -224,11 +224,13 @@
             
     </div>
 }
-
-@if (ShowMatches && Game.Matches.Any())
+@{
+    var roundMatches = CurrentRoundMatches().ToList();
+}
+        @if (ShowMatches && roundMatches.Any())
 {
     <div class="row g-4">
-        @foreach (var m in Game.Matches)
+                @foreach (var m in roundMatches)
         {
             <div class="col-lg-6">
                 <div class="text-center fw-semibold fs-3 mb-2">@m.CourtName</div>
@@ -309,26 +311,39 @@
 }
 
         <div class="d-flex justify-content-center my-4 gap-2">
+            
+            @if (Game.Matches.Any())
+            {
+                <Button Color="ButtonColor.Secondary" @onclick="OpenHistory">📜 Previous matches</Button>
+            }
+
             <Button Color="ButtonColor.Primary"
                     Disabled="@(!CanGoNext)"
                     @onclick="NextRound">
-                ▶ Next
+                ▶ @(Game.CurrentRound == 0 ? "Play" : "Next")
             </Button>
 
-            <Button Color="ButtonColor.Warning"
-                    Disabled="@(!CanGoFinal || !CanGoNext)"
-                    @onclick="FinalRound">
-                🏁 Final round
-            </Button>
+            @if (Game.CurrentRound > 0)
+            {
+                <Button Color="ButtonColor.Warning"
+                        Disabled="@(!CanGoFinal || !CanGoNext)"
+                        @onclick="FinalRound">
+                    🏁 Final round
+                </Button>
+            }
         </div>
 </div>
 
 </div>
 
 <ScorePicker @ref="_scorePicker" OnPick="OnScorePicked" />
+<HistoryModal @ref="_historyModal"
+              Matches="Game.Matches"
+              Players="Game.Players" />
 
 @code {
     private ScorePicker _scorePicker = default!;
+    private HistoryModal _historyModal = default!;
     private Game Game { get; set; } = new();
 
     // Radio bindings (map bool <-> string for Blazor.Bootstrap RadioInput)
@@ -346,9 +361,9 @@
 
     private string? NewCourtName { get; set; }
     private string? NewPlayerName { get; set; }
-    
+
     bool ShowMatches => Game.Matches.Any();
-    
+
     private static readonly Random _rng = new();
 
     protected override void OnInitialized()
@@ -491,6 +506,7 @@
 
     void NextRound()
     {
+        Game.CurrentRound++;
         // If there are current matches, require completion and commit them first
         if (Game.Matches.Count > 0)
         {
@@ -503,24 +519,23 @@
         // Generate the next round (keep your actual Americano/Mexicano logic here)
         GenerateNextRoundMatches();
 
-        Game.CurrentRound++;
         StateHasChanged();
     }
 
     void GenerateNextRoundMatches()
     {
-        Game.Matches.Clear();
-        if (Game.Courts.Count == 0 || Game.Players.Count < 2) return;
+        Console.WriteLine(Game.CurrentRound);
 
+        // Early/late Mexicano rule
         bool useMexicanoByScore = Game.TournamentType == TournamentType.Mexicano && Game.CurrentRound > 3;
 
-        // --- AMERICANO or early MEXICANO: random fill ---
         if (!useMexicanoByScore)
         {
+            // AMERICANO or early MEXICANO → random
             var pool = Game.Players.OrderBy(_ => _rng.Next()).ToList();
             int p = 0, c = 0;
 
-            if (Game.TeamFormat == TeamFormat.Pairs) // singles (1v1): 2 players per match
+            if (Game.TeamFormat == TeamFormat.Pairs) // singles (1v1)
             {
                 while (c < Game.Courts.Count && p + 1 < pool.Count)
                 {
@@ -531,7 +546,7 @@
                     c++;
                 }
             }
-            else // Individual -> doubles (2v2): 4 players per match
+            else // Individual → doubles (2v2)
             {
                 while (c < Game.Courts.Count && p + 3 < pool.Count)
                 {
@@ -546,7 +561,7 @@
             return;
         }
 
-        // --- MEXICANO (post round 3): pair by similar score ---
+        // MEXICANO (after round 3): pair by similar score
         var ranked = Game.Players
             .OrderByDescending(p => p.Points)
             .ThenByDescending(p => p.Wins)
@@ -554,10 +569,9 @@
             .ThenBy(p => p.Name)
             .ToList();
 
-        int idx = 0;
-        int courtIx = 0;
+        int idx = 0, courtIx = 0;
 
-        if (Game.TeamFormat == TeamFormat.Pairs) // singles 1v1: consume 2 at a time (1 vs 2), (3 vs 4)...
+        if (Game.TeamFormat == TeamFormat.Pairs) // singles (1v1): 2 at a time (1 vs 2), (3 vs 4)...
         {
             while (courtIx < Game.Courts.Count && idx + 1 < ranked.Count)
             {
@@ -572,7 +586,7 @@
                 courtIx++;
             }
         }
-        else // Individual -> doubles 2v2: consume quartets with random (1,4 vs 2,3) or (1,3 vs 2,4)
+        else // Individual → doubles (2v2): quartets 1,4 v 2,3 OR 1,3 v 2,4
         {
             while (courtIx < Game.Courts.Count && idx + 3 < ranked.Count)
             {
@@ -594,6 +608,8 @@
                 courtIx++;
             }
         }
+
+        Console.WriteLine(Game.Matches);
     }
 
     void CommitCurrentRound()
@@ -614,9 +630,6 @@
                 foreach (var p in m.Team2) p.Wins += 1;
             // ties => no Wins increment
         }
-
-        // Optional: persist/clear the on-screen matches after commit
-        Game.Matches.Clear();
     }
 
     IEnumerable<string> IndividualNames(List<Player> team)
@@ -647,9 +660,13 @@
 
         StateHasChanged();
     }
+    
+    private async Task OpenHistory() => await _historyModal.ShowAsync();
 
     void FinalRound()
     {
+        // Optional: mark round name/number
+        Game.CurrentRound++;
         // Commit the current visible round (push to histories & update stats)
         if (Game.Matches.Count > 0)
         {
@@ -660,24 +677,17 @@
         // Build the final pairing(s)
         GenerateFinalRoundMatches();
 
-        // Optional: mark round name/number
-        Game.CurrentRound++;
         StateHasChanged();
     }
 
     void GenerateFinalRoundMatches()
     {
-        Game.Matches.Clear();
-
-        // Rank players for finals according to your standings rule
         var ranked = OrderPlayersForFinal(Game.Players).ToList();
         if (ranked.Count < 4) return;
 
         if (Game.TeamFormat == TeamFormat.Individual)
         {
-            // One showcase doubles final on the first court using top 4 and selected option
             var court = Game.Courts.First();
-
             var (t1, t2) = Game.FinalPairingOption switch
             {
                 FinalPairingOption.OneTwoVsThreeFour => (new[] { ranked[0], ranked[1] }, new[] { ranked[2], ranked[3] }),
@@ -691,19 +701,19 @@
             m.Team2.AddRange(t2);
             Game.Matches.Add(m);
         }
-        else // TeamFormat.Pairs
+        else // Pairs → doubles blocks (1&2) vs (3&4), (5&6) vs (7&8), ...
         {
-            var block = 0;
-            for (var c = 0; c < Game.Courts.Count; c++)
+            int block = 0;
+            for (int c = 0; c < Game.Courts.Count; c++)
             {
-                var i = block * 2;
-                if (i + 2 >= ranked.Count) break;
+                int i = block * 4;
+                if (i + 3 >= ranked.Count) break;
 
                 var m = new Match { Round = Game.CurrentRound, CourtName = Game.Courts[c].Name };
-                m.Team1.Add(ranked[i + 0]);
-                m.Team2.Add(ranked[i + 1]);
-
+                m.Team1.Add(ranked[i + 0]); m.Team1.Add(ranked[i + 1]);
+                m.Team2.Add(ranked[i + 2]); m.Team2.Add(ranked[i + 3]);
                 Game.Matches.Add(m);
+
                 block++;
             }
         }
@@ -736,12 +746,19 @@
     bool AllScoresFilled()
         => Game.Matches.All(m => (m.Team1Points + m.Team2Points) == Game.ToPoints);
 
+    IEnumerable<Match> CurrentRoundMatches()
+        => Game.Matches.Where(m => m.Round == Game.CurrentRound);
+
+    bool AllScoresFilledThisRound()
+        => CurrentRoundMatches().Any() &&
+           CurrentRoundMatches().All(m => (m.Team1Points + m.Team2Points) == Game.ToPoints);
+
     bool BaseReady()
-        => Game.Courts.Count >= 1 && Game.Players.Count >= 4;
+        => Game.Courts.Count >= 1 && Game.Players.Count >= (Game.TeamFormat == TeamFormat.Pairs ? 2 : 4);
 
     bool CanGoNext
-        => BaseReady() && (Game.Matches.Count == 0 || AllScoresFilled());
+        => BaseReady() && ( !CurrentRoundMatches().Any() || AllScoresFilledThisRound() );
 
     bool CanGoFinal
-        => CanGoNext && Game.Matches.Count > 0;
+        => BaseReady() && ( !CurrentRoundMatches().Any() || AllScoresFilledThisRound()) && Game.CurrentRound > 0;
 }
