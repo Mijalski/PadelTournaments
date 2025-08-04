@@ -15,4 +15,6 @@ public class Match
     public int? Team1Points { get; set; }
 
     public int? Team2Points { get; set; }
+
+    public bool IsSkipper { get; set; }
 }

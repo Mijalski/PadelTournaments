@@ -243,7 +243,7 @@
     </div>
 }
 @{
-    var roundMatches = CurrentRoundMatches().ToList();
+    var roundMatches = CurrentRoundMatches().Where(x => !x.IsSkipper).ToList();
 }
 @if (ShowMatches && roundMatches.Any())
 {
@@ -658,6 +658,8 @@
                 Game.Matches.Add(m);
             }
         }
+
+        AwardSkipPointsAtCreation(Game.CurrentRound, skippers);
     }
 
     void CommitCurrentRound()
@@ -678,18 +680,18 @@
             else if (m.Team2Points > m.Team1Points)
                 foreach (var p in m.Team2) p.Wins += 1;
         }
+    }
 
-        // --- Award points to skippers and add BYE matches to history ---
-        var participated = matchesThisRound.SelectMany(m => m.Team1.Concat(m.Team2)).ToHashSet();
-        var skippers = Game.Players.Where(p => !participated.Contains(p)).ToList();
+    void AwardSkipPointsAtCreation(int round, IEnumerable<Player> skippers)
+    {
         var skipPoints = (Game.ToPoints / 2) + 1;
 
         foreach (var p in skippers)
         {
-            // Update stats
+            // Update standings now
             p.Points += skipPoints;
 
-            // Add a synthetic BYE match so HistoryModal can pick it up
+            // Add a BYE match so history/leaderboard pick it up
             var bye = new Match
             {
                 Round = round,
@@ -697,13 +699,15 @@
                 Team1Points = skipPoints,
                 Team2Points = 0
             };
-            bye.Team1.Add(p);
-            // Team2 left empty on purpose
+            bye.IsSkipper = true;
+            bye.Team1.Add(p);           // Team2 left empty on purpose
 
+            // Persist to both history and global matches
             p.MatchHistory.Add(bye);
             Game.Matches.Add(bye);
         }
     }
+
 
     private void OnScorePicked(ScorePicker.ScorePickArgs e)
     {
@@ -723,7 +727,7 @@
 
         StateHasChanged();
     }
-    
+
     private async Task OpenHistory() => await _historyModal.ShowAsync();
 
     void FinalRound()
@@ -795,8 +799,6 @@
         if (latestRound > 0 && latestRoundMatches.Any() && latestRoundMatches.Any(m => m.Team1Points + m.Team2Points == 0))
             return;
 
-        var nextRound = Game.Matches.Any() ? Game.Matches.Max(m => m.Round) + 1 : 1;
-
         var ranked = OrderPlayersForFinal(Game.Players).ToList();
         if (ranked.Count < 4) return;
 
@@ -819,7 +821,7 @@
                     _ => (new[] { ranked[0 + i], ranked[1 + i] }, new[] { ranked[2 + i], ranked[3 + i] })
                 };
 
-                var m = new Match { Round = nextRound, CourtName = Game.Courts[c].Name };
+                var m = new Match { Round = Game.CurrentRound, CourtName = Game.Courts[c].Name };
                 m.Team1.AddRange(t1);
                 m.Team2.AddRange(t2);
                 finalMatches.Add(m);
@@ -834,7 +836,7 @@
                 var i = block * 4;
                 if (i + 3 >= ranked.Count) break;
 
-                var m = new Match { Round = nextRound, CourtName = Game.Courts[c].Name };
+                var m = new Match { Round = Game.CurrentRound, CourtName = Game.Courts[c].Name };
                 m.Team1.Add(ranked[i + 0]); m.Team1.Add(ranked[i + 1]);
                 m.Team2.Add(ranked[i + 2]); m.Team2.Add(ranked[i + 3]);
                 finalMatches.Add(m);
@@ -847,7 +849,7 @@
 
         // === Build final positions ===
         _finalPositions.Clear();
-        _finalRound = nextRound;
+        _finalRound = Game.CurrentRound;
 
         // Players actually playing in the finals, in ranked order
         var finalists = finalMatches
@@ -857,14 +859,14 @@
             .ToList();
 
         // Players not in finals (skipping) – also keep their ranked order, but list them AFTER finalists
-        var skipping = ranked.Where(p => !finalists.Contains(p)).ToList();
+        var skippers = ranked.Where(p => !finalists.Contains(p)).ToList();
 
         // Assign positions: finalists first, then skippers
         var pos = 1;
         foreach (var p in finalists) _finalPositions[p] = pos++;
-        foreach (var p in skipping) _finalPositions[p] = pos++;
+        foreach (var p in skippers) _finalPositions[p] = pos++;
 
-        Game.CurrentRound = nextRound;
+        AwardSkipPointsAtCreation(Game.CurrentRound, skippers);
     }
 
 
