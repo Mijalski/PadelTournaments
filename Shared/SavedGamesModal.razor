@@ -1,0 +1,128 @@
+﻿@using System.Text.Json
+@using BlazorBootstrap
+@using PadelTournamentManager.Models.Enums
+@inject IJSRuntime JS
+
+<Modal @ref="_modal"
+       Title="Match History"
+       IsVerticallyCentered="true"
+       Size="ModalSize.Large">
+
+    <HeaderTemplate>
+        <h5 class="modal-title">📖 Match History</h5>
+    </HeaderTemplate>
+
+    <BodyTemplate>
+        @if (SavedGames.Count == 0)
+        {
+            <Alert Color="AlertColor.Info">No saved games found.</Alert>
+        }
+        else
+        {
+            <div class="list-group">
+                @foreach (var game in SavedGames.OrderByDescending(g => g.SavedAt))
+                {
+                    var winner = game.IsFinalRound
+                        ? GetFinalWinner(game)
+                        : null;
+
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>@game.TournamentType</strong>
+                            @if (!string.IsNullOrEmpty(winner))
+                            {
+                                <span class="ms-2 text-success">🏆 (@winner)</span>
+                            }
+
+                            <div class="text-muted small">
+                                @game.SavedAt.ToString("yyyy-MM-dd HH:mm")
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <Button Size="ButtonSize.Small"
+                                    Color="ButtonColor.Primary"
+                                    @onclick="() => LoadGame(game)">
+                                🔄 Load
+                            </Button>
+                            <Button Size="ButtonSize.Small"
+                                    Color="ButtonColor.Danger"
+                                    @onclick="() => DeleteGame(game.Id)">
+                                🗑️ Delete
+                            </Button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </BodyTemplate>
+</Modal>
+
+@code {
+    private Modal? _modal;
+    private List<SavedGame> SavedGames = new();
+
+    [Parameter] public EventCallback<SavedGame> OnLoadGame { get; set; }
+
+    public async Task ShowAsync()
+    {
+        await LoadGames();
+        if (_modal is not null)
+        {
+            await _modal.ShowAsync();
+        }
+    }
+
+    async Task LoadGames()
+    {
+        var json = await JS.InvokeAsync<string>("localStorage.getItem", "saved-games");
+        SavedGames = string.IsNullOrWhiteSpace(json)
+            ? new()
+            : JsonSerializer.Deserialize<List<SavedGame>>(json) ?? new();
+    }
+
+    async Task LoadGame(SavedGame game)
+    {
+        if (OnLoadGame.HasDelegate)
+        {
+            await OnLoadGame.InvokeAsync(game);
+        }
+
+        await _modal?.HideAsync()!;
+    }
+
+    async Task DeleteGame(string id)
+    {
+        SavedGames.RemoveAll(g => g.Id == id);
+        var json = JsonSerializer.Serialize(SavedGames);
+        await JS.InvokeVoidAsync("localStorage.setItem", "saved-games", json);
+    }
+
+    void Close()
+    {
+        _modal?.HideAsync();
+    }
+
+    private string? GetFinalWinner(SavedGame game)
+    {
+        if (game.Players.Count == 0)
+        {
+            return null;
+        }
+
+        return game.ResultSorting switch
+        {
+            ResultSorting.WinsOverPoints => game.Players
+                .OrderByDescending(p => p.Wins)
+                .ThenByDescending(p => p.Points)
+                .FirstOrDefault()?.Name,
+
+            ResultSorting.PointsOverWins => game.Players
+                .OrderByDescending(p => p.Points)
+                .ThenByDescending(p => p.Wins)
+                .FirstOrDefault()?.Name,
+
+            _ => null
+        };
+    }
+}

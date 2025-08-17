@@ -67,7 +67,11 @@
     public async Task Close()
     {
         _typed = string.Empty;
-        if (_module is not null) await _module.InvokeVoidAsync("detach");
+        if (_module is not null)
+        {
+            await _module.InvokeVoidAsync("detach");
+        }
+
         await _modal.HideAsync();
     }
 
@@ -91,7 +95,11 @@
 
         if (key == "Backspace")
         {
-            if (!string.IsNullOrEmpty(_typed)) _typed = _typed[..^1];
+            if (!string.IsNullOrEmpty(_typed))
+            {
+                _typed = _typed[..^1];
+            }
+
             StateHasChanged();
             return;
         }
@@ -99,7 +107,10 @@
         if (key == "Enter")
         {
             if (int.TryParse(_typed, out var entered) && entered <= ToPoints)
+            {
                 await Pick(entered);
+            }
+
             return;
         }
 
@@ -107,7 +118,10 @@
         {
             _typed += key;
             _typed = _typed.TrimStart('0');
-            if (string.IsNullOrEmpty(_typed)) _typed = "0";
+            if (string.IsNullOrEmpty(_typed))
+            {
+                _typed = "0";
+            }
 
             if (!int.TryParse(_typed, out var val))
             {
@@ -143,7 +157,11 @@
 
     public async ValueTask DisposeAsync()
     {
-        try { if (_module is not null) await _module.InvokeVoidAsync("detach"); }
+        try { if (_module is not null)
+            {
+                await _module.InvokeVoidAsync("detach");
+            }
+        }
         catch { /* ignore */ }
         _selfRef?.Dispose();
         if (_module is not null)

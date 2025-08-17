@@ -15,8 +15,15 @@
         var n = PlayersCount;
         var ppm = PlayersPerMatch;
 
-        if (courts <= 0) return (0, 0, n);   // no courts -> everyone skips
-        if (n < ppm)     return (0, 0, n);   // not enough for one match
+        if (courts <= 0)
+        {
+            return (0, 0, n);   // no courts -> everyone skips
+        }
+
+        if (n < ppm)
+        {
+            return (0, 0, n);   // not enough for one match
+        }
 
         var matches = Math.Min(courts, n / ppm);
         var playing = matches * ppm;

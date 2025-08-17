@@ -1,9 +1,10 @@
 ﻿@using BlazorBootstrap
+@using PadelTournamentManager.Models.Enums
 
-<Modal @ref="_modal" Title="Previous matches" IsVerticallyCentered="true" Size="ModalSize.Regular">
+<Modal @ref="_modal" Title="Leaderboard" IsVerticallyCentered="true" Size="ModalSize.Regular">
     <HeaderTemplate>
         <div class="d-flex w-100 align-items-center">
-            <div class="fw-semibold">Previous matches</div>
+            <div class="fw-semibold">Leaderboard</div>
             <div class="ms-auto btn-group">
                 <button class="btn btn-sm @(view == ViewMode.Detailed ? "btn-primary" : "btn-outline-primary")"
                         @onclick="(() => view = ViewMode.Detailed)">
@@ -58,7 +59,7 @@
 
                                     @if (view == ViewMode.Detailed)
                                     {
-                                        @for (int r = 1; r <= MaxRound; r++)
+                                        @for (var r = 1; r <= MaxRound; r++)
                                         {
                                             var pts = row.PointsByRound.GetValueOrDefault(r, 0);
                                             var isWin = row.WinsByRound.TryGetValue(r, out var w) && w;
@@ -97,8 +98,7 @@
 
 @code {
     // Inputs
-    [Parameter] public IEnumerable<Match> Matches { get; set; } = [];
-    [Parameter] public IEnumerable<Player> Players { get; set; } = [];
+    [Parameter] public Game Game { get; set; }
 
     // Modal API
     private Modal _modal = default!;
@@ -108,51 +108,51 @@
     // View toggle
     enum ViewMode { Detailed, Summary }
     ViewMode view = ViewMode.Detailed;
-
-    // Computed model for rows
-    class RowModel
-    {
-        public string Name { get; init; } = "";
-        public Player Player { get; init; } = default!;
-        public Dictionary<int,int> PointsByRound { get; } = new(); // round -> pts
-        public Dictionary<int,bool>  WinsByRound { get; } = new(); // round -> won?
-        public Dictionary<int,bool>  ByeByRound  { get; } = new(); // round -> is bye?
-        public int Total { get; set; }
-        public int Wins { get; set; }
-        public int Position { get; set; }
-    }
-
+    
     List<RowModel> Rows { get; set; } = [];
     int MaxRound { get; set; }
 
     IEnumerable<RowModel> SortedRows =>
-        Rows.OrderByDescending(r => r.Total)
-            .ThenByDescending(r => r.Wins)
-            .ThenBy(r => r.Name)
-            .Select((r, i) => { r.Position = i + 1; return r; });
+        Game?.ResultSorting == ResultSorting.WinsOverPoints
+            ? Rows.OrderByDescending(r => r.Wins)
+                .ThenByDescending(r => r.Total)
+                .ThenBy(r => r.Name)
+                .Select((r, i) => { r.Position = i + 1; return r; })
+            : Rows.OrderByDescending(r => r.Total)
+                .ThenByDescending(r => r.Wins)
+                .ThenBy(r => r.Name)
+                .Select((r, i) => { r.Position = i + 1; return r; });
+
 
     void Rebuild()
     {
         Rows.Clear();
-        MaxRound = Matches.Any() ? Matches.Max(m => m.Round) : 0;
-        if (MaxRound == 0) return;
+        MaxRound = Game.Matches.Any() ? Game.Matches.Max(m => m.Round) : 0;
+        if (MaxRound == 0)
+        {
+            return;
+        }
 
-        var allPlayers = Players?.ToList() ?? new();
+        var allPlayers = Game.Players?.ToList() ?? new();
         if (!allPlayers.Any())
-            allPlayers = Matches.SelectMany(m => m.Team1.Concat(m.Team2)).Distinct().ToList();
+        {
+            allPlayers = Game.Matches.SelectMany(m => m.Team1.Concat(m.Team2)).Distinct().ToList();
+        }
 
         var map = new Dictionary<Player, RowModel>();
         foreach (var p in allPlayers)
-            map[p] = new RowModel { Name = p.Name, Player = p };
-
-        foreach (var m in Matches)
         {
-            bool isByeMatch = string.Equals(m.CourtName, "BYE", StringComparison.OrdinalIgnoreCase) || m.Team2.Count == 0;
+            map[p] = new RowModel { Name = p.Name, Player = p };
+        }
+
+        foreach (var m in Game.Matches)
+        {
+            var isByeMatch = string.Equals(m.CourtName, "BYE", StringComparison.OrdinalIgnoreCase) || m.Team2.Count == 0;
 
             if (!isByeMatch)
             {
-                bool t1win = m.Team1Points > m.Team2Points;
-                bool t2win = m.Team2Points > m.Team1Points;
+                var t1win = m.Team1Points > m.Team2Points;
+                var t2win = m.Team2Points > m.Team1Points;
 
                 foreach (var p in m.Team1)
                 {
@@ -176,15 +176,38 @@
             }
         }
 
+        // After Rows = map.Values.ToList();
         Rows = map.Values.ToList();
+
+        // Sort using Game.ResultSorting
+        if (Game?.ResultSorting == ResultSorting.WinsOverPoints)
+        {
+            Rows = Rows.OrderByDescending(r => r.Wins)
+                .ThenByDescending(r => r.Total)
+                .ToList();
+        }
+        else if (Game?.ResultSorting == ResultSorting.PointsOverWins)
+        {
+            Rows = Rows.OrderByDescending(r => r.Total)
+                .ThenByDescending(r => r.Wins)
+                .ToList();
+        }
+
+        // Assign final position numbers
+        for (var i = 0; i < Rows.Count; i++)
+            Rows[i].Position = i + 1;
+
     }
 
     static void AddRound(RowModel row, int round, int pts, bool win, bool isBye)
     {
         row.PointsByRound[round] = pts;
-        row.WinsByRound[round]   = win;
-        row.ByeByRound[round]    = isBye;
+        row.WinsByRound[round] = win;
+        row.ByeByRound[round] = isBye;
         row.Total += pts;
-        if (win) row.Wins += 1;
+        if (win)
+        {
+            row.Wins += 1;
+        }
     }
 }

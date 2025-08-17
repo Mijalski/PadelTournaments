@@ -1,8 +1,6 @@
 @page "/"
-@using System.Text.Json
 @using BlazorBootstrap
 @using PadelTournamentManager.Models.Enums
-@inject IJSRuntime JS
 
 <!-- Fullscreen, oversized, rotated 🎾 background -->
 <div class="bg-emoji-fixed" aria-hidden="true"></div>
@@ -10,7 +8,7 @@
 <div class="container py-4">
 <div class="row g-4">
 @if (!ShowMatches)
-{
+        {
     <div class="col-lg-6">
         <Card Class="h-100 border-0 shadow-sm rounded-4 bg-primary-subtle">
             <CardBody Class="text-center p-4">
@@ -18,10 +16,10 @@
 
                 <div class="d-inline-block text-start">
                     <div class="form-check mb-2">
-                        <RadioInput Name="TournamentType" Label="Americano" @bind-Value="IsAmericano" />
+                        <RadioInput Name="TournamentType" Label="Americano" @bind-Value="IsAmericano"/>
                     </div>
                     <div class="form-check">
-                        <RadioInput Name="TournamentType" Label="Mexicano" @bind-Value="IsMexicano" />
+                        <RadioInput Name="TournamentType" Label="Mexicano" @bind-Value="IsMexicano"/>
                     </div>
                 </div>
             </CardBody>
@@ -36,10 +34,10 @@
 
                 <div class="d-inline-block text-start">
                     <div class="form-check mb-2">
-                        <RadioInput Name="ResultSorting" Label="Points then wins" @bind-Value="IsPointsThenWins" />
+                        <RadioInput Name="ResultSorting" Label="Points then wins" @bind-Value="IsPointsThenWins"/>
                     </div>
                     <div class="form-check">
-                        <RadioInput Name="ResultSorting" Label="Wins then points" @bind-Value="IsWinsThenPoints" />
+                        <RadioInput Name="ResultSorting" Label="Wins then points" @bind-Value="IsWinsThenPoints"/>
                     </div>
                 </div>
             </CardBody>
@@ -56,20 +54,20 @@
                     <div class="form-check mb-2">
                         <RadioInput Name="ScoringMode"
                                     Label="Play points or games"
-                                    @bind-Value="IsPlayPointsOrGames" />
+                                    @bind-Value="IsPlayPointsOrGames"/>
                     </div>
 
                     <div class="d-flex align-items-center gap-2">
                         <div class="form-check m-0">
                             <RadioInput Name="ScoringMode"
                                         Label="Play to"
-                                        @bind-Value="IsPlayToPoints" />
+                                        @bind-Value="IsPlayToPoints"/>
                         </div>
 
                         <InputNumber @bind-Value="Game.ToPoints"
                                      class="form-control form-control-sm w-auto"
                                      min="1" max="99"
-                                     disabled="@(!IsPlayToPoints)" />
+                                     disabled="@(!IsPlayToPoints)"/>
                         <span>points</span>
                     </div>
                 </div>
@@ -85,10 +83,10 @@
 
                 <div class="d-inline-block text-start">
                     <div class="form-check mb-2">
-                        <RadioInput Name="TeamFormat" Label="Individually" @bind-Value="IsIndividual" />
+                        <RadioInput Name="TeamFormat" Label="Individually" @bind-Value="IsIndividual"/>
                     </div>
                     <div class="form-check">
-                        <RadioInput Name="TeamFormat" Label="Team" @bind-Value="IsTeam" />
+                        <RadioInput Name="TeamFormat" Label="Team" @bind-Value="IsTeam"/>
                     </div>
                 </div>
             </CardBody>
@@ -104,8 +102,8 @@
                     <div class="input-group mb-3" style="max-width: 480px;">
                         <TextInput Placeholder="Court name"
                                    @bind-Value="NewCourtName"
-                                   OnInput="@((ChangeEventArgs e) => NewCourtName = e?.Value?.ToString() )"
-                                   @onkeyup="@(e => OnEnterUp(e, AddCourt) )" />
+                                   OnInput="@((ChangeEventArgs e) => NewCourtName = e?.Value?.ToString())"
+                                   @onkeyup="@(e => OnEnterUp(e, AddCourt))"/>
                         <Button Color="ButtonColor.Secondary" Class="px-4" @onclick="AddCourt">ADD</Button>
                     </div>
                 </div>
@@ -126,31 +124,31 @@
 
                                 <Button Color="ButtonColor.Secondary" Class="me-2"
                                         Title="Save" @onclick="@(() => SaveCourt(c.Order))">
-                                    <Icon Name="IconName.Check2" />
+                                    <Icon Name="IconName.Check2"/>
                                 </Button>
                                 <Button Color="ButtonColor.Link" Class="me-3"
                                         Title="Cancel" @onclick="@(() => CancelEditCourt(c.Order))">
-                                    <Icon Name="IconName.XLg" />
+                                    <Icon Name="IconName.XLg"/>
                                 </Button>
                             }
                             else
                             {
                                 <span class="me-2 fw-medium">@c.Order.</span>
                                 <span class="flex-grow-1">@c.Name</span>
-                                    
+
                                 <Badge Color="BadgeColor.Primary" IndicatorType="BadgeIndicatorType.RoundedPill" Class="me-3">
                                     PADEL
                                 </Badge>
 
                                 <Button Color="ButtonColor.Link" Class="me-2"
                                         Title="Edit" @onclick="@(() => EditCourtByOrder(c.Order))">
-                                    <Icon Name="IconName.PencilSquare" />
+                                    <Icon Name="IconName.PencilSquare"/>
                                 </Button>
                             }
 
                             <Button Color="ButtonColor.Link" Class="text-danger p-0"
                                     Title="Delete" @onclick="@(() => RemoveCourtByOrder(c.Order))">
-                                <Icon Name="IconName.TrashFill" />
+                                <Icon Name="IconName.TrashFill"/>
                             </Button>
                         </li>
                     }
@@ -165,11 +163,11 @@
                 <CardTitle class="mb-3 fw-semibold text-secondary-emphasis">🧑‍🤝‍🧑 Players</CardTitle>
 
                 <div class="d-flex justify-content-center">
-                            <div class="input-group mb-3" style="max-width: 480px;">
-                                <TextInput Placeholder="Player name"
-                                           @bind-Value="NewPlayerName"
-                                           OnInput="@((ChangeEventArgs e) => NewPlayerName = e?.Value?.ToString())"
-                                           @onkeyup="@(e => OnEnterUp(e, AddPlayer))" />
+                    <div class="input-group mb-3" style="max-width: 480px;">
+                        <TextInput Placeholder="Player name"
+                                   @bind-Value="NewPlayerName"
+                                   OnInput="@((ChangeEventArgs e) => NewPlayerName = e?.Value?.ToString())"
+                                   @onkeyup="@(e => OnEnterUp(e, AddPlayer))"/>
 
                         <Button Color="ButtonColor.Primary" @onclick="AddPlayer" Disabled="@NameExists(NewPlayerName)">Add</Button>
                     </div>
@@ -203,11 +201,11 @@
                                 <Button Color="ButtonColor.Secondary" Class="me-2"
                                         Disabled="@NameExists(NewPlayerName)"
                                         Title="Save" @onclick="@(() => SavePlayer(p.Name))">
-                                    <Icon Name="IconName.Check2" />
+                                    <Icon Name="IconName.Check2"/>
                                 </Button>
                                 <Button Color="ButtonColor.Link" Class="me-3"
                                         Title="Cancel" @onclick="@(() => CancelEditPlayer(p.Name))">
-                                    <Icon Name="IconName.XLg" />
+                                    <Icon Name="IconName.XLg"/>
                                 </Button>
                             }
                             else
@@ -222,13 +220,13 @@
 
                                 <Button Color="ButtonColor.Link" Class="me-2"
                                         Title="Edit" @onclick="@(() => EditPlayer(p.Name))">
-                                    <Icon Name="IconName.PencilSquare" />
+                                    <Icon Name="IconName.PencilSquare"/>
                                 </Button>
                             }
 
                             <Button Color="ButtonColor.Link" Class="text-danger p-0"
                                     Title="Delete" @onclick="@(() => RemovePlayerById(p.Name))">
-                                <Icon Name="IconName.TrashFill" />
+                                <Icon Name="IconName.TrashFill"/>
                             </Button>
                         </li>
                     }
@@ -236,10 +234,10 @@
                 <CapacityAlert
                     CourtsCount="@Game.Courts.Count"
                     PlayersCount="@Game.Players.Count"
-                    TeamFormat="@Game.TeamFormat" />
+                    TeamFormat="@Game.TeamFormat"/>
             </CardBody>
         </Card>
-            
+
     </div>
 }
 @{
@@ -247,79 +245,84 @@
 }
 @if (ShowMatches && roundMatches.Any())
 {
-            <div class="row g-4 @CourtGridClasses(roundMatches.Count)">
-                @foreach (var m in roundMatches)
-                {
-                    <div class="col">
-                        <div class="text-center fw-semibold fs-4 mb-2">@m.CourtName</div>
+    <h1 style="text-align: center;"> Round @Game.CurrentRound</h1>
+    <div class="row g-4 @CourtGridClasses(roundMatches.Count)">
+        @foreach (var m in roundMatches)
+        {
+            <div class="col">
+                <div class="text-center fw-semibold fs-4 mb-2">@m.CourtName</div>
 
-                        <div class="court">
+                <div class="court">
 
-                            <div class="court-grid">
-                                <!-- TOP LEFT -->
-                                <div class="grid-top-left">
-                                    @if (Game.TeamFormat == TeamFormat.Pairs)
-                                    {
-                                        <div class="pill pill-dark">@NameFor(m, m.Team1.Single())</div>
-                                    }
-                                    else
-                                    {
-                                        <div class="pill pill-dark pill-sm">@NameFor(m, m.Team1[0])</div>
-                                    }
+                    <div class="court-grid">
+                        <!-- TOP LEFT -->
+                        <div class="grid-top-left">
+                            @if (Game.TeamFormat == TeamFormat.Pairs)
+                            {
+                                <div class="pill pill-dark">@NameFor(m, m.Team1.Single())</div>
+                            }
+                            else
+                            {
+                                <div class="pill pill-dark pill-sm">@NameFor(m, m.Team1[0])</div>
+                            }
+                        </div>
+
+                        <!-- TOP RIGHT -->
+                        <div class="grid-top-right">
+                            @if (Game.TeamFormat == TeamFormat.Pairs)
+                            {
+                                <div class="pill pill-dark">@NameFor(m, m.Team2.Single())</div>
+                            }
+                            else
+                            {
+                                <div class="stack">
+                                    <div class="pill pill-dark pill-sm">@NameFor(m, m.Team2[0])</div>
                                 </div>
+                            }
+                        </div>
 
-                                <!-- TOP RIGHT -->
-                                <div class="grid-top-right">
-                                    @if (Game.TeamFormat == TeamFormat.Pairs)
-                                    {
-                                        <div class="pill pill-dark">@NameFor(m, m.Team2.Single())</div>
-                                    }
-                                    else
-                                    {
-                                        <div class="stack">
-                                            <div class="pill pill-dark pill-sm">@NameFor(m, m.Team2[0])</div>
-                                        </div>
-                                    }
-                                </div>
+                        <!-- MID (SCORES) -->
+                        <div class="disc grid-mid-left"
+                             role="button" tabindex="0"
+                             @onclick="@(async () => await _scorePicker.ShowAsync(m, 1, Game.ToPoints))"
+                             @onkeyup="@(async e => { if (e.Key == "Enter") {
+                                           await _scorePicker.ShowAsync(m, 1, Game.ToPoints);
+                                       } })">
+                            @(m.Team1Points.HasValue ? m.Team1Points.Value.ToString() : "?")
+                        </div>
 
-                                <!-- MID (SCORES) -->
-                                <div class="disc grid-mid-left"
-                                     role="button" tabindex="0"
-                                     @onclick="@(async () => await _scorePicker.ShowAsync(m, 1, Game.ToPoints))"
-                                     @onkeyup="@(async e => { if (e.Key == "Enter") await _scorePicker.ShowAsync(m, 1, Game.ToPoints); })">
-                                    @(m.Team1Points.HasValue ? m.Team1Points.Value.ToString() : "?")
-                                </div>
+                        <div class="disc grid-mid-right"
+                             role="button" tabindex="0"
+                             @onclick="@(async () => await _scorePicker.ShowAsync(m, 2, Game.ToPoints))"
+                             @onkeyup="@(async e => { if (e.Key == "Enter") {
+                                           await _scorePicker.ShowAsync(m, 2, Game.ToPoints);
+                                       } })">
+                            @(m.Team2Points.HasValue ? m.Team2Points.Value.ToString() : "?")
+                        </div>
 
-                                <div class="disc grid-mid-right"
-                                     role="button" tabindex="0"
-                                     @onclick="@(async () => await _scorePicker.ShowAsync(m, 2, Game.ToPoints))"
-                                     @onkeyup="@(async e => { if (e.Key == "Enter") await _scorePicker.ShowAsync(m, 2, Game.ToPoints); })">
-                                    @(m.Team2Points.HasValue ? m.Team2Points.Value.ToString() : "?")
-                                </div>
+                        <!-- BOTTOM LEFT -->
 
-                                <!-- BOTTOM LEFT -->
-
-                                @if (Game.TeamFormat == TeamFormat.Individual)
-                                {
-                                    <div class="grid-bot-left">
-                                        @{
-                                            <div class="stack">
-                                                <div class="pill pill-dark pill-sm">@NameFor(m, m.Team1[1])</div>
-                                            </div>
-                                        }
-                                    </div>
-
-                                    <!-- BOTTOM RIGHT -->
-                                    <div class="grid-bot-right">
-                                        @{
-                                            <div class="stack">
-                                                <div class="pill pill-dark pill-sm">@NameFor(m, m.Team2[1])</div>
-                                            </div>
-                                        }
+                        @if (Game.TeamFormat == TeamFormat.Individual)
+                        {
+                            <div class="grid-bot-left">
+                                @{
+                                    <div class="stack">
+                                        <div class="pill pill-dark pill-sm">@NameFor(m, m.Team1[1])</div>
                                     </div>
                                 }
                             </div>
-                        </div>
+
+                            <!-- BOTTOM RIGHT -->
+                            <div class="grid-bot-right">
+                                @{
+                                    <div class="stack">
+                                        <div class="pill pill-dark pill-sm">@NameFor(m, m.Team2[1])</div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
             </div>
         }
     </div>
@@ -336,727 +339,57 @@
     }
 }
 
-        <div class="d-flex justify-content-center my-4 gap-2">
-            
-            @if (Game.Matches.Any())
-            {
-                <Button Color="ButtonColor.Secondary" @onclick="OpenHistory">📜 Previous matches</Button>
-            }
+<div class="d-flex justify-content-center my-4 gap-2">
 
-            <Button Color="ButtonColor.Primary"
-                    Disabled="@(!CanGoNext)"
-                    @onclick="NextRound">
-                ▶ @(Game.CurrentRound == 0 ? "Play" : "Next")
-            </Button>
 
-            @if (Game.CurrentRound > 0)
-            {
-                <Button Color="ButtonColor.Warning"
-                        Disabled="@(!CanGoFinal || !CanGoNext)"
-                        @onclick="FinalRound">
-                    🏁 Final round
-                </Button>
-            }
-        </div>
+    @if (Game.CurrentRound == 0)
+    {
+        <Button Color="ButtonColor.Info" @onclick="ShowMatchHistory">
+            📖 Match History
+        </Button>
+    }
+
+    @if (Game.Matches.Any())
+    {
+        <Button Color="ButtonColor.Secondary"
+                Disabled="@(!CanGoBack)"
+                @onclick="GoBackOneRound">
+            ⬅ Back
+        </Button>
+        <Button Color="ButtonColor.Secondary" @onclick="OpenHistory">📜 Leaderboard</Button>
+    }
+
+    @if (Game.CurrentRound != Game.FinalRound || Game.FinalRound == 0)
+    {
+        <Button Color="ButtonColor.Primary"
+                Disabled="@(!CanGoNext)"
+                @onclick="NextRoundAsync">
+            ▶ @(Game.CurrentRound == 0 ? "Play" : "Next")
+        </Button>
+    }
+
+    @if (Game.CurrentRound > 0 && Game.CurrentRound != Game.FinalRound)
+    {
+        <Button Color="ButtonColor.Warning"
+                Disabled="@(!CanGoFinal || !CanGoNext)"
+                @onclick="FinalRoundAsync">
+            🏁 Final round
+        </Button>
+    }
+    @if (Game.CurrentRound == Game.FinalRound && Game.FinalRound != 0)
+     {
+         <Button Color="ButtonColor.Danger" @onclick="ExitToStartAsync" Disabled="!Game.Matches
+             .Where(m => m.Round == Game.CurrentRound && !m.IsSkipper)
+             .All(m => m.Team1Points.HasValue && m.Team2Points.HasValue)">
+             🚪 Exit
+         </Button>
+     }
+
+</div>
 </div>
 
 </div>
 
 <ScorePicker @ref="_scorePicker" OnPick="OnScorePicked" />
-<HistoryModal @ref="_historyModal"
-              Matches="Game.Matches"
-              Players="Game.Players" />
-
-@code {
-    private ScorePicker _scorePicker = default!;
-    private HistoryModal _historyModal = default!;
-    private Game Game { get; set; } = new();
-    IJSObjectReference? _storageModule;
-
-    // Radio bindings (map bool <-> string for Blazor.Bootstrap RadioInput)
-    private bool IsAmericano { get => Game.TournamentType == TournamentType.Americano; set { if (value) Game.TournamentType = TournamentType.Americano; } }
-    private bool IsMexicano { get => Game.TournamentType == TournamentType.Mexicano; set { if (value) Game.TournamentType = TournamentType.Mexicano; } }
-
-    private bool IsPointsThenWins { get => Game.ResultSorting == ResultSorting.PointsOverWins; set { if (value) Game.ResultSorting = ResultSorting.PointsOverWins; } }
-    private bool IsWinsThenPoints { get => Game.ResultSorting == ResultSorting.WinsOverPoints; set { if (value) Game.ResultSorting = ResultSorting.WinsOverPoints; } }
-
-    private bool IsPlayPointsOrGames { get => Game.ScoringType == ScoringType.GamesAndSets; set { if (value) Game.ScoringType = ScoringType.GamesAndSets; } }
-    private bool IsPlayToPoints { get => Game.ScoringType == ScoringType.Points; set { if (value) Game.ScoringType = ScoringType.Points; } }
-
-    private bool IsIndividual { get => Game.TeamFormat == TeamFormat.Individual; set { if (value) Game.TeamFormat = TeamFormat.Individual; } }
-    private bool IsTeam { get => Game.TeamFormat == TeamFormat.Pairs; set { if (value) Game.TeamFormat = TeamFormat.Pairs; } }
-
-    private string? NewCourtName { get; set; }
-    private string? NewPlayerName { get; set; }
-
-    bool ShowMatches => Game.Matches.Any();
-
-    private static readonly Random _rng = new();
-    private readonly Queue<Player> _skipQueue = new();
-
-    private bool NameExists(string proposed, Player? exclude = null) =>
-        Game.Players.Any(x =>
-            !ReferenceEquals(x, exclude) &&
-            string.Equals(x.Name, proposed, StringComparison.OrdinalIgnoreCase));
-
-    protected override async Task OnInitializedAsync()
-    {
-        await base.OnInitializedAsync();
-        await EnsureStorageAsync();
-        Game.Players = [new Player("Dominik P", 1), new Player("Hajzen", 2), new Player("Hubert", 3), new Player("Pan Krzysztof", 4),];
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await LoadConfigAsync(); // silently load if available
-            StateHasChanged();
-        }
-    }
-
-    void AddCourt()
-    {
-        var name = (NewCourtName ?? string.Empty).Trim();
-        if (!string.IsNullOrWhiteSpace(name))
-        {
-            Game.Courts.Add(new Court(name, Game.Courts.Count + 1));
-            NewCourtName = string.Empty;
-        }
-        _ = SaveConfigAsync();
-    }
-
-    void RemoveCourtByOrder(int order)
-    {
-        var found = Game.Courts.FirstOrDefault(x => x.Order == order);
-        if (found is not null)
-        {
-            Game.Courts.Remove(found);
-        }
-        ReindexCourts(order);
-        _ = SaveConfigAsync();
-    }
-
-    void EditCourtByOrder(int order)
-    {
-        var c = Game.Courts.FirstOrDefault(x => x.Order == order);
-        if (c is null)
-        {
-            return;
-        }
-        c.EditName = c.Name;
-        c.IsEditing = true;
-        _ = SaveConfigAsync();
-    }
-
-    void SaveCourt(int order)
-    {
-        var c = Game.Courts.FirstOrDefault(x => x.Order == order);
-        if (c is null)
-        {
-            return;
-        }
-        var newName = c.EditName?.Trim() ?? c.Name;
-        if (!string.IsNullOrWhiteSpace(newName)) c.Name = newName;
-        c.IsEditing = false;
-        c.EditName = null;
-        ReindexPlayers();
-        _ = SaveConfigAsync();
-    }
-
-    void CancelEditCourt(int order)
-    {
-        var c = Game.Courts.FirstOrDefault(x => x.Order == order);
-        if (c is null)
-        {
-            return;
-        }
-        c.IsEditing = false;
-        c.EditName = null;
-    }
-
-    void ReindexCourts(int order)
-    {
-        for (var i = order; i < Game.Courts.Count; i++)
-        {
-            Game.Courts[i].Order = i + 1;
-        }
-    }
-
-    void AddPlayer()
-    {
-        var name = (NewPlayerName ?? string.Empty).Trim();
-        if (!string.IsNullOrWhiteSpace(name) && !NameExists(name))
-        {
-            Game.Players.Add(new Player(name, Game.Players.Count + 1));
-            NewPlayerName = string.Empty;
-        }
-        ReindexPlayers();
-    }
-
-    void EditPlayer(string name)
-    {
-        var p = Game.Players.FirstOrDefault(x => x.Name == name);
-        if (p is null)
-        {
-            return;
-        }
-        p.EditName = p.Name;
-        p.IsEditing = true;
-    }
-
-    void SavePlayer(string name)
-    {
-        var p = Game.Players.FirstOrDefault(x => x.Name == name);
-        if (p is null)
-        {
-            return;
-        }
-        var newName = p.EditName?.Trim() ?? p.Name;
-
-        if (!string.IsNullOrWhiteSpace(newName) && !NameExists(newName, p))
-        {
-            p.Name = newName;
-            p.IsEditing = false;
-            p.EditName = null;
-            ReindexPlayers();
-        }
-    }
-
-    void CancelEditPlayer(string name)
-    {
-        var p = Game.Players.FirstOrDefault(x => x.Name == name);
-        if (p is null)
-        {
-            return;
-        }
-        p.IsEditing = false;
-        p.EditName = null;
-    }
-
-    void RemovePlayerById(string name)
-    {
-        var found = Game.Players.FirstOrDefault(x => x.Name == name);
-        if (found is not null) Game.Players.Remove(found);
-        ReindexPlayers();
-    }
-
-    void ReindexPlayers()
-    {
-        for (var i = 0; i < Game.Players.Count; i++)
-        {
-            Game.Players[i].Order = i + 1;
-        }
-    }
-
-    void OnEnterUp(KeyboardEventArgs e, Action action)
-    {
-        if (e.Key == "Enter") action();
-    }
-
-    void NextRound()
-    {
-        if (Game.CurrentRound == 0)
-        {
-            _ = SaveConfigAsync();
-        }
-        Game.CurrentRound++;
-        // If there are current matches, require completion and commit them first
-        if (Game.Matches.Count > 0)
-        {
-            if (!AllScoresFilled())
-                return; // guard: shouldn't be clickable, but double-protect
-
-            CommitCurrentRound();
-        }
-
-        // Generate the next round (keep your actual Americano/Mexicano logic here)
-        GenerateNextRoundMatches();
-
-        StateHasChanged();
-    }
-
-    void GenerateNextRoundMatches()
-    {
-        // Optional guard: finish latest round
-        var latestRound = Game.Matches.Any() ? Game.Matches.Max(m => m.Round) : 0;
-        var latestMatches = Game.Matches.Where(m => m.Round == latestRound).ToList();
-        if (latestRound > 0 && latestMatches.Any() && latestMatches.Any(m => m.Team1Points + m.Team2Points == 0))
-            return;
-
-        // --- Round-robin skipper selection ---
-        EnsureSkipQueueUpToDate();
-        var cap = ComputeCapacity();
-        if (cap.matches == 0) return;
-
-        var skippers = TakeSkippers(cap.skipping);
-        var selected = Game.Players.Where(p => !skippers.Contains(p)).ToList();
-
-        var mexicanoByScore = Game.TournamentType == TournamentType.Mexicano && Game.CurrentRound > 3;
-
-        // === Pair the selected players ===
-        if (!mexicanoByScore)
-        {
-            // Americano (always random) or early Mexicano
-            var pool = selected.OrderBy(_ => _rng.Next()).ToList();
-            var p = 0;
-            for (var c = 0; c < cap.matches; c++)
-            {
-                var m = new Match { Round = Game.CurrentRound, CourtName = Game.Courts[c].Name };
-
-                if (Game.TeamFormat == TeamFormat.Pairs) // singles 1v1
-                {
-                    m.Team1.Add(pool[p++]);
-                    m.Team2.Add(pool[p++]);
-                }
-                else // Individual -> doubles 2v2
-                {
-                    m.Team1.Add(pool[p++]); m.Team1.Add(pool[p++]);
-                    m.Team2.Add(pool[p++]); m.Team2.Add(pool[p++]);
-                }
-
-                Game.Matches.Add(m);
-            }
-        }
-        else
-        {
-            // Mexicano after 3 rounds: similar-level groups
-            var ranked = selected
-                .OrderByDescending(p => p.Points)
-                .ThenByDescending(p => p.Wins)
-                .ThenBy(p => p.Order)
-                .ThenBy(p => p.Name)
-                .ToList();
-
-            var idx = 0;
-            for (var c = 0; c < cap.matches; c++)
-            {
-                var m = new Match { Round = Game.CurrentRound, CourtName = Game.Courts[c].Name };
-
-                if (Game.TeamFormat == TeamFormat.Pairs) // singles 1v1: neighbor pairs
-                {
-                    var p1 = ranked[idx++]; var p2 = ranked[idx++];
-                    m.Team1.Add(p1);
-                    m.Team2.Add(p2);
-                }
-                else // Individual -> doubles 2v2: quartets
-                {
-                    var p1 = ranked[idx + 0];
-                    var p2 = ranked[idx + 1];
-                    var p3 = ranked[idx + 2];
-                    var p4 = ranked[idx + 3];
-                    idx += 4;
-
-                    var option14_23 = _rng.Next(2) == 0;
-                    var left = option14_23 ? [p1, p4] : new[] { p1, p3 };
-                    var right = option14_23 ? [p2, p3] : new[] { p2, p4 };
-
-                    m.Team1.AddRange(left);
-                    m.Team2.AddRange(right);
-                }
-
-                Game.Matches.Add(m);
-            }
-        }
-
-        AwardSkipPointsAtCreation(Game.CurrentRound, skippers);
-    }
-
-    void CommitCurrentRound()
-    {
-        if (!Game.Matches.Any()) return;
-
-        var round = Game.Matches.Max(m => m.Round);
-        var matchesThisRound = Game.Matches.Where(m => m.Round == round).ToList();
-
-        // Regular per-match updates
-        foreach (var m in matchesThisRound)
-        {
-            foreach (var p in m.Team1) { p.MatchHistory.Add(m); p.Points += m.Team1Points.Value; }
-            foreach (var p in m.Team2) { p.MatchHistory.Add(m); p.Points += m.Team2Points.Value; }
-
-            if (m.Team1Points > m.Team2Points)
-                foreach (var p in m.Team1) p.Wins += 1;
-            else if (m.Team2Points > m.Team1Points)
-                foreach (var p in m.Team2) p.Wins += 1;
-        }
-    }
-
-    void AwardSkipPointsAtCreation(int round, IEnumerable<Player> skippers)
-    {
-        var skipPoints = (Game.ToPoints / 2) + 1;
-
-        foreach (var p in skippers)
-        {
-            // Update standings now
-            p.Points += skipPoints;
-
-            // Add a BYE match so history/leaderboard pick it up
-            var bye = new Match
-            {
-                Round = round,
-                CourtName = "BYE",
-                Team1Points = skipPoints,
-                Team2Points = 0
-            };
-            bye.IsSkipper = true;
-            bye.Team1.Add(p);           // Team2 left empty on purpose
-
-            // Persist to both history and global matches
-            p.MatchHistory.Add(bye);
-            Game.Matches.Add(bye);
-        }
-    }
-
-
-    private void OnScorePicked(ScorePicker.ScorePickArgs e)
-    {
-        var max = Math.Max(0, Game.ToPoints);
-        var other = max - e.Selected;
-
-        if (e.Team == 1)
-        {
-            e.Match.Team1Points = e.Selected;
-            e.Match.Team2Points = other;
-        }
-        else
-        {
-            e.Match.Team2Points = e.Selected;
-            e.Match.Team1Points = other;
-        }
-
-        StateHasChanged();
-    }
-
-    private async Task OpenHistory() => await _historyModal.ShowAsync();
-
-    void FinalRound()
-    {
-        // Optional: mark round name/number
-        Game.CurrentRound++;
-        // Commit the current visible round (push to histories & update stats)
-        if (Game.Matches.Count > 0)
-        {
-            if (!AllScoresFilled()) return; // safety
-            CommitCurrentRound();
-        }
-
-        // Build the final pairing(s)
-        GenerateFinalRoundMatches();
-
-        StateHasChanged();
-    }
-
-    private int _finalRound = 0;
-    private readonly Dictionary<Player, int> _finalPositions = new();
-
-    private List<Player> RankedForFinalDisplay()
-    {
-        var ranked = OrderPlayersForFinal(Game.Players).ToList();
-        if (_finalRound == 0) return ranked;
-
-        var finalists = Game.Matches
-            .Where(m => m.Round == _finalRound)
-            .SelectMany(m => m.Team1.Concat(m.Team2))
-            .ToHashSet();
-
-        // Finalists first (preserving ranking), skippers after (preserving ranking)
-        var finalistsInOrder = ranked.Where(finalists.Contains).ToList();
-        var skippersInOrder  = ranked.Where(p => !finalists.Contains(p)).ToList();
-
-        finalistsInOrder.AddRange(skippersInOrder);
-        return finalistsInOrder;
-    }
-
-    private string NameFor(Match m, Player p)
-    {
-        if (_finalRound == 0 || m.Round != _finalRound) 
-            return p.Name;
-
-        var ranked = RankedForFinalDisplay();
-        var pos = ranked.FindIndex(x => ReferenceEquals(x, p));
-        if (pos < 0) pos = ranked.FindIndex(x => string.Equals(x.Name, p.Name, StringComparison.Ordinal));
-        return pos >= 0 ? $"#{pos + 1} {p.Name}" : p.Name;
-    }
-
-    private string NameFor(Player p)
-    {
-        if (_finalRound == 0)
-            return p.Name;
-
-        var ranked = RankedForFinalDisplay();
-        var pos = ranked.FindIndex(x => ReferenceEquals(x, p));
-        if (pos < 0) pos = ranked.FindIndex(x => string.Equals(x.Name, p.Name, StringComparison.Ordinal));
-        return pos >= 0 ? $"#{pos + 1} {p.Name}" : p.Name;
-    }
-
-
-    void GenerateFinalRoundMatches()
-    {
-        // (Optional) guard: require latest round to be complete
-        var latestRound = Game.Matches.Any() ? Game.Matches.Max(m => m.Round) : 0;
-        var latestRoundMatches = Game.Matches.Where(m => m.Round == latestRound).ToList();
-        if (latestRound > 0 && latestRoundMatches.Any() && latestRoundMatches.Any(m => m.Team1Points + m.Team2Points == 0))
-            return;
-
-        var ranked = OrderPlayersForFinal(Game.Players).ToList();
-        if (ranked.Count < 4) return;
-
-        // Build final matches (your existing logic)
-        var finalMatches = new List<Match>();
-
-        if (Game.TeamFormat == TeamFormat.Individual)
-        {
-            var block = 0;
-            for (var c = 0; c < Game.Courts.Count; c++)
-            {
-                var i = block * 4;
-                if (i + 3 >= ranked.Count) break;
-
-                var (t1, t2) = Game.FinalPairingOption switch
-                {
-                    FinalPairingOption.OneTwoVsThreeFour => ([ranked[0 + i], ranked[1 + i]], [ranked[2 + i], ranked[3 + i]]),
-                    FinalPairingOption.OneFourVsTwoThree => ([ranked[0 + i], ranked[3 + i]], [ranked[1 + i], ranked[2 + i]]),
-                    FinalPairingOption.OneThreeVsTwoFour => ([ranked[0 + i], ranked[2 + i]], [ranked[1 + i], ranked[3 + i]]),
-                    _ => (new[] { ranked[0 + i], ranked[1 + i] }, new[] { ranked[2 + i], ranked[3 + i] })
-                };
-
-                var m = new Match { Round = Game.CurrentRound, CourtName = Game.Courts[c].Name };
-                m.Team1.AddRange(t1);
-                m.Team2.AddRange(t2);
-                finalMatches.Add(m);
-                block++;
-            }
-        }
-        else // TeamFormat.Pairs -> doubles blocks: (1&2) vs (3&4), (5&6) vs (7&8), ...
-        {
-            var block = 0;
-            for (var c = 0; c < Game.Courts.Count; c++)
-            {
-                var i = block * 4;
-                if (i + 3 >= ranked.Count) break;
-
-                var m = new Match { Round = Game.CurrentRound, CourtName = Game.Courts[c].Name };
-                m.Team1.Add(ranked[i + 0]); m.Team1.Add(ranked[i + 1]);
-                m.Team2.Add(ranked[i + 2]); m.Team2.Add(ranked[i + 3]);
-                finalMatches.Add(m);
-                block++;
-            }
-        }
-
-        // Append the new matches
-        foreach (var m in finalMatches) Game.Matches.Add(m);
-
-        // === Build final positions ===
-        _finalPositions.Clear();
-        _finalRound = Game.CurrentRound;
-
-        // Players actually playing in the finals, in ranked order
-        var finalists = finalMatches
-            .SelectMany(m => m.Team1.Concat(m.Team2))
-            .Distinct()
-            .OrderBy(p => ranked.IndexOf(p))
-            .ToList();
-
-        // Players not in finals (skipping) – also keep their ranked order, but list them AFTER finalists
-        var skippers = ranked.Where(p => !finalists.Contains(p)).ToList();
-
-        // Assign positions: finalists first, then skippers
-        var pos = 1;
-        foreach (var p in finalists) _finalPositions[p] = pos++;
-        foreach (var p in skippers) _finalPositions[p] = pos++;
-
-        AwardSkipPointsAtCreation(Game.CurrentRound, skippers);
-    }
-
-
-    IEnumerable<Player> OrderPlayersForFinal(IEnumerable<Player> players)
-    {
-        return Game.ResultSorting switch
-        {
-            ResultSorting.WinsOverPoints =>
-                players.OrderByDescending(p => p.Wins)
-                    .ThenByDescending(p => p.Points)
-                    .ThenBy(p => p.Order)
-                    .ThenBy(p => p.Name),
-
-            ResultSorting.PointsOverWins =>
-                players.OrderByDescending(p => p.Points)
-                    .ThenByDescending(p => p.Wins)
-                    .ThenBy(p => p.Order)
-                    .ThenBy(p => p.Name),
-
-            _ =>
-                players.OrderByDescending(p => p.Points)
-                    .ThenByDescending(p => p.Wins)
-                    .ThenBy(p => p.Order)
-                    .ThenBy(p => p.Name)
-        };
-    }
-
-    bool AllScoresFilled()
-        => Game.Matches.All(m => (m.Team1Points + m.Team2Points) > 0);
-
-    IEnumerable<Match> CurrentRoundMatches()
-        => Game.Matches.Where(m => m.Round == Game.CurrentRound);
-
-    bool AllScoresFilledThisRound()
-        => CurrentRoundMatches().Any() &&
-           CurrentRoundMatches().All(m => (m.Team1Points + m.Team2Points) > 0);
-
-    bool BaseReady()
-        => Game.Courts.Count >= 1 && Game.Players.Count >= (Game.TeamFormat == TeamFormat.Pairs ? 2 : 4);
-
-    bool CanGoNext
-        => BaseReady() && ( !CurrentRoundMatches().Any() || AllScoresFilledThisRound() );
-
-    bool CanGoFinal
-        => BaseReady() && ( !CurrentRoundMatches().Any() || AllScoresFilledThisRound()) && Game.CurrentRound > 0;
-
-    
-    async Task EnsureStorageAsync()
-        => _storageModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "./appStorage.js");
-
-    async Task SaveConfigAsync()
-    {
-        await EnsureStorageAsync();
-        var dto = GameConfigDto.FromGame(Game);
-        var json = JsonSerializer.Serialize(dto);
-        await _storageModule.InvokeVoidAsync("set", GameConfigDto.GameConfigKey, json);
-    }
-
-    async Task<bool> LoadConfigAsync()
-    {
-        await EnsureStorageAsync();
-        var json = await _storageModule.InvokeAsync<string?>("get", GameConfigDto.GameConfigKey);
-        if (string.IsNullOrWhiteSpace(json)) return false;
-
-        try
-        {
-            var dto = JsonSerializer.Deserialize<GameConfigDto>(json);
-            if (dto is null) return false;
-            dto.ApplyTo(Game);
-
-            // If you show the current round view, you might keep Game.CurrentRound; do not touch Matches/Players
-            StateHasChanged();
-            return true;
-        }
-        catch { return false; }
-    }
-
-    async Task ClearConfigAsync()
-    {
-        await EnsureStorageAsync();
-        await _storageModule.InvokeVoidAsync("remove", GameConfigDto.GameConfigKey);
-    }
-    
-    private IReadOnlyList<Player> SkippingPlayers => GetSkippingPlayers(Game.CurrentRound);
-
-    private IReadOnlyList<Player> GetSkippingPlayers(int round)
-    {
-        var inRound = Game.Matches
-            .Where(m => m.Round == round)
-            .SelectMany(m => m.Team1.Concat(m.Team2))
-            .ToHashSet();
-
-        return Game.Players
-            .Where(p => !inRound.Contains(p))
-            .OrderBy(p => p.Order)
-            .ThenBy(p => p.Name)
-            .ToList();
-    }
-
-    string CourtGridClasses(int count) => count switch
-    {
-        4 => "row-cols-1 row-cols-md-2",   // 2 by 2 on md+ screens
-        6 => "row-cols-1 row-cols-lg-3",   // 3 per row on lg+ screens
-        _ => "row-cols-1 row-cols-md-2 row-cols-xl-3" // default responsive
-    };
-
-    void EnsureSkipQueueUpToDate()
-    {
-        // Keep existing order for players that still exist, append any new players deterministically
-        var current = Game.Players.ToList();
-
-        // If counts match and all queue members still present, assume OK
-        if (_skipQueue.Count == current.Count && _skipQueue.All(p => current.Contains(p)))
-            return;
-
-        // Rebuild: start with players that are currently in the queue (preserve order), keep only those still present
-        var preserved = _skipQueue.Where(current.Contains).ToList();
-        _skipQueue.Clear();
-        foreach (var p in preserved) _skipQueue.Enqueue(p);
-
-        // Append missing players by stable order (Order, Name)
-        foreach (var p in current
-            .Except(preserved)
-            .OrderBy(p => p.Order)
-            .ThenBy(p => p.Name))
-        {
-            _skipQueue.Enqueue(p);
-        }
-
-        // If queue ended empty (first run), seed it
-        if (_skipQueue.Count == 0)
-        {
-            foreach (var p in current.OrderBy(p => p.Order).ThenBy(p => p.Name))
-                _skipQueue.Enqueue(p);
-        }
-    }
-
-    int PlayersPerMatch() => Game.TeamFormat == TeamFormat.Pairs ? 2 : 4;
-
-    (int matches, int playing, int skipping) ComputeCapacity()
-    {
-        var courts = Game.Courts.Count;
-        var n = Game.Players.Count;
-        var ppm = PlayersPerMatch();
-
-        if (courts <= 0 || n < ppm) return (0, 0, n);
-
-        var m = Math.Min(courts, n / ppm);
-        var playing = m * ppm;
-        var skipping = Math.Max(0, n - playing);
-        return (m, playing, skipping);
-    }
-
-    // Dequeue `count` skippers (round-robin) and rotate them to the back.
-    // Guarantees all skippers are members of Game.Players.
-    List<Player> TakeSkippers(int count)
-    {
-        EnsureSkipQueueUpToDate();
-
-        var present = Game.Players.ToHashSet();
-        var picked = new List<Player>(Math.Max(0, count));
-
-        // We limit iterations to safety bound
-        var safety = _skipQueue.Count * 2;
-        while (picked.Count < count && safety-- > 0 && _skipQueue.Count > 0)
-        {
-            var p = _skipQueue.Dequeue();
-            if (present.Contains(p))
-            {
-                picked.Add(p);
-                _skipQueue.Enqueue(p); // rotate to the back after being picked to skip
-            }
-            else
-            {
-                // If player is no longer present, don't re-enqueue
-            }
-        }
-
-        // If still short (added players just now), rebuild and retry once
-        if (picked.Count < count)
-        {
-            EnsureSkipQueueUpToDate();
-            while (picked.Count < count && _skipQueue.Count > 0)
-            {
-                var p = _skipQueue.Dequeue();
-                picked.Add(p);
-                _skipQueue.Enqueue(p);
-            }
-        }
-
-        return picked;
-    }
-}
+<HistoryModal @ref="_historyModal" Game="Game" />
+<SavedGamesModal @ref="SavedGamesModalRef" OnLoadGame="LoadGameFromHistory" />
