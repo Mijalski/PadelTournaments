@@ -1,5 +1,5 @@
 ﻿@using BlazorBootstrap
-@inject IJSRuntime JS
+@inject IJSRuntime Js
 
 <Modal @ref="_modal" Title="Set score" IsVerticallyCentered="true" Size="ModalSize.Large">
     <HeaderTemplate>
@@ -57,7 +57,7 @@
         ToPoints = toPoints;
         _typed = string.Empty;
 
-        _module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./scorePicker.js");
+        _module ??= await Js.InvokeAsync<IJSObjectReference>("import", "./scorePicker.js");
         _selfRef ??= DotNetObjectReference.Create(this);
         await _module.InvokeVoidAsync("attach", _selfRef);
 

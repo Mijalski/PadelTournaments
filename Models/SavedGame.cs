@@ -31,4 +31,6 @@ public class SavedGame
     public bool IsFinalRound { get; set; }
 
     public int FinalRound { get; set; }
+
+    public string Winner { get; set; } = default!;
 }

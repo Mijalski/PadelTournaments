@@ -8,7 +8,7 @@
 <div class="container py-4">
 <div class="row g-4">
 @if (!ShowMatches)
-        {
+    {
     <div class="col-lg-6">
         <Card Class="h-100 border-0 shadow-sm rounded-4 bg-primary-subtle">
             <CardBody Class="text-center p-4">
@@ -245,7 +245,7 @@
 }
 @if (ShowMatches && roundMatches.Any())
 {
-    <h1 style="text-align: center;"> Round @Game.CurrentRound</h1>
+    <h1 style="text-align: center;">@(Game.FinalRound == Game.CurrentRound ? "Final Round" : $"Round {Game.CurrentRound}")</h1>
     <div class="row g-4 @CourtGridClasses(roundMatches.Count)">
         @foreach (var m in roundMatches)
         {
@@ -392,4 +392,4 @@
 
 <ScorePicker @ref="_scorePicker" OnPick="OnScorePicked" />
 <HistoryModal @ref="_historyModal" Game="Game" />
-<SavedGamesModal @ref="SavedGamesModalRef" OnLoadGame="LoadGameFromHistory" />
+<SavedGamesModal @ref="_savedGamesModalRef" OnLoadGame="LoadGameFromHistory" />

@@ -47,17 +47,17 @@ public class Game
             var isBye = string.Equals(match.CourtName, "BYE", StringComparison.OrdinalIgnoreCase) || match.Team2.Count == 0;
             if (!isBye)
             {
-                var t1win = match.Team1Points > match.Team2Points;
-                var t2win = match.Team2Points > match.Team1Points;
+                var t1Win = match.Team1Points > match.Team2Points;
+                var t2Win = match.Team2Points > match.Team1Points;
 
                 foreach (var p in match.Team1)
                 {
-                    AddFinalRoundStat(map[p], match.Round, match.Team1Points ?? 0, t1win);
+                    AddFinalRoundStat(map[p], match.Round, match.Team1Points ?? 0, t1Win);
                 }
 
                 foreach (var p in match.Team2)
                 {
-                    AddFinalRoundStat(map[p], match.Round, match.Team2Points ?? 0, t2win);
+                    AddFinalRoundStat(map[p], match.Round, match.Team2Points ?? 0, t2Win);
                 }
             }
             else
@@ -75,7 +75,7 @@ public class Game
             ? rows.OrderByDescending(r => r.Wins).ThenByDescending(r => r.Total).ToList()
             : rows.OrderByDescending(r => r.Total).ThenByDescending(r => r.Wins).ToList();
 
-        for (int i = 0; i < rows.Count; i++)
+        for (var i = 0; i < rows.Count; i++)
             rows[i].Position = i + 1;
 
         return rows;

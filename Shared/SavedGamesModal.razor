@@ -1,7 +1,7 @@
 ﻿@using System.Text.Json
 @using BlazorBootstrap
 @using PadelTournamentManager.Models.Enums
-@inject IJSRuntime JS
+@inject IJSRuntime Js
 
 <Modal @ref="_modal"
        Title="Match History"
@@ -13,14 +13,14 @@
     </HeaderTemplate>
 
     <BodyTemplate>
-        @if (SavedGames.Count == 0)
+        @if (_savedGames.Count == 0)
         {
             <Alert Color="AlertColor.Info">No saved games found.</Alert>
         }
         else
         {
             <div class="list-group">
-                @foreach (var game in SavedGames.OrderByDescending(g => g.SavedAt))
+                @foreach (var game in _savedGames.OrderByDescending(g => g.SavedAt))
                 {
                     var winner = game.IsFinalRound
                         ? GetFinalWinner(game)
@@ -60,7 +60,7 @@
 
 @code {
     private Modal? _modal;
-    private List<SavedGame> SavedGames = new();
+    private List<SavedGame> _savedGames = new();
 
     [Parameter] public EventCallback<SavedGame> OnLoadGame { get; set; }
 
@@ -75,8 +75,8 @@
 
     async Task LoadGames()
     {
-        var json = await JS.InvokeAsync<string>("localStorage.getItem", "saved-games");
-        SavedGames = string.IsNullOrWhiteSpace(json)
+        var json = await Js.InvokeAsync<string>("localStorage.getItem", "saved-games");
+        _savedGames = string.IsNullOrWhiteSpace(json)
             ? new()
             : JsonSerializer.Deserialize<List<SavedGame>>(json) ?? new();
     }
@@ -93,9 +93,9 @@
 
     async Task DeleteGame(string id)
     {
-        SavedGames.RemoveAll(g => g.Id == id);
-        var json = JsonSerializer.Serialize(SavedGames);
-        await JS.InvokeVoidAsync("localStorage.setItem", "saved-games", json);
+        _savedGames.RemoveAll(g => g.Id == id);
+        var json = JsonSerializer.Serialize(_savedGames);
+        await Js.InvokeVoidAsync("localStorage.setItem", "saved-games", json);
     }
 
     void Close()
@@ -110,19 +110,6 @@
             return null;
         }
 
-        return game.ResultSorting switch
-        {
-            ResultSorting.WinsOverPoints => game.Players
-                .OrderByDescending(p => p.Wins)
-                .ThenByDescending(p => p.Points)
-                .FirstOrDefault()?.Name,
-
-            ResultSorting.PointsOverWins => game.Players
-                .OrderByDescending(p => p.Points)
-                .ThenByDescending(p => p.Wins)
-                .FirstOrDefault()?.Name,
-
-            _ => null
-        };
+        return game.Winner;
     }
 }

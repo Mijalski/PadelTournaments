@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 
 namespace PadelTournamentManager.Models;
 
@@ -21,15 +23,17 @@ public class Player
 
     public List<Match> MatchHistory = [];
 
-    public int Points => MatchHistory
-                             .Where(m => m.Team1.Contains(this))
-                             .Sum(m => m.Team1Points ?? 0)
-                         +
-                         MatchHistory
-                             .Where(m => m.Team2.Contains(this))
-                             .Sum(m => m.Team2Points ?? 0);
+    public int Points => MatchHistory.Sum(m =>
+        m.Team1.Any(p => string.Equals(p.Name, Name, StringComparison.OrdinalIgnoreCase))
+            ? m.Team1Points.GetValueOrDefault()
+            : m.Team2.Any(p => string.Equals(p.Name, Name, StringComparison.OrdinalIgnoreCase))
+                ? m.Team2Points.GetValueOrDefault()
+                : 0);
 
     public int Wins => MatchHistory.Count(m =>
-        (m.Team1.Contains(this) && m.Team1Points > m.Team2Points) ||
-        (m.Team2.Contains(this) && m.Team2Points > m.Team1Points));
+        (m.Team1.Any(p => string.Equals(p.Name, Name, StringComparison.OrdinalIgnoreCase)) &&
+         m.Team1Points.GetValueOrDefault() > m.Team2Points.GetValueOrDefault())
+        ||
+        (m.Team2.Any(p => string.Equals(p.Name, Name, StringComparison.OrdinalIgnoreCase)) &&
+         m.Team2Points.GetValueOrDefault() > m.Team1Points.GetValueOrDefault()));
 }

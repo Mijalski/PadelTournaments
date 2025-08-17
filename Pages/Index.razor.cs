@@ -15,11 +15,11 @@ namespace PadelTournamentManager.Pages;
 public partial class Index
 {
     [Inject]
-    IJSRuntime JSRuntime { get; set; }
+    IJSRuntime JsRuntime { get; set; }
 
     private ScorePicker _scorePicker = default!;
     private HistoryModal _historyModal = default!;
-    SavedGamesModal? SavedGamesModalRef;
+    SavedGamesModal? _savedGamesModalRef;
     private Game Game { get; set; } = new();
     IJSObjectReference? _storageModule;
 
@@ -113,14 +113,14 @@ public partial class Index
 
     bool ShowMatches => Game.Matches.Any();
 
-    private static readonly Random _rng = new();
+    private static readonly Random Rng = new();
     private readonly Queue<Player> _skipQueue = new();
 
     async Task ShowMatchHistory()
     {
-        if (SavedGamesModalRef is not null)
+        if (_savedGamesModalRef is not null)
         {
-            await SavedGamesModalRef.ShowAsync();
+            await _savedGamesModalRef.ShowAsync();
         }
     }
 
@@ -425,7 +425,7 @@ public partial class Index
         if (!mexicanoByScore)
         {
             // Americano (always random) or early Mexicano
-            var pool = selected.OrderBy(_ => _rng.Next()).ToList();
+            var pool = selected.OrderBy(_ => Rng.Next()).ToList();
             var p = 0;
             for (var c = 0; c < cap.matches; c++)
             {
@@ -474,9 +474,9 @@ public partial class Index
                     var p4 = ranked[idx + 3];
                     idx += 4;
 
-                    var option14_23 = _rng.Next(2) == 0;
-                    var left = option14_23 ? [p1, p4] : new[] { p1, p3 };
-                    var right = option14_23 ? [p2, p3] : new[] { p2, p4 };
+                    var option1423 = Rng.Next(2) == 0;
+                    var left = option1423 ? [p1, p4] : new[] { p1, p3 };
+                    var right = option1423 ? [p2, p3] : new[] { p2, p4 };
 
                     m.Team1.AddRange(left);
                     m.Team2.AddRange(right);
@@ -721,7 +721,7 @@ public partial class Index
 
     async Task<List<SavedGame>> LoadSavedGamesAsync()
     {
-        var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", StorageKey);
+        var json = await JsRuntime.InvokeAsync<string>("localStorage.getItem", StorageKey);
         return string.IsNullOrWhiteSpace(json)
             ? new()
             : JsonSerializer.Deserialize<List<SavedGame>>(json) ?? new();
@@ -752,7 +752,8 @@ public partial class Index
             Matches = Game.Matches.ToList(),
             Courts = Game.Courts.ToList(),
             IsFinalRound = Game.IsFinalRound,
-            FinalRound = Game.FinalRound
+            FinalRound = Game.FinalRound,
+            Winner = Game.ComputeFinalRanking().FirstOrDefault()?.Player.Name ?? string.Empty
         };
 
         if (existing != null)
@@ -766,7 +767,7 @@ public partial class Index
         }
 
         var json = JsonSerializer.Serialize(saved);
-        await JSRuntime.InvokeVoidAsync("localStorage.setItem", StorageKey, json);
+        await JsRuntime.InvokeVoidAsync("localStorage.setItem", StorageKey, json);
     }
 
     IEnumerable<Player> OrderPlayersForFinal(IEnumerable<Player> players)
@@ -814,7 +815,7 @@ public partial class Index
 
 
     async Task EnsureStorageAsync()
-        => _storageModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./appStorage.js");
+        => _storageModule ??= await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./appStorage.js");
 
     async Task SaveConfigAsync()
     {

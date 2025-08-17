@@ -5,16 +5,6 @@
     <HeaderTemplate>
         <div class="d-flex w-100 align-items-center">
             <div class="fw-semibold">Leaderboard</div>
-            <div class="ms-auto btn-group">
-                <button class="btn btn-sm @(view == ViewMode.Detailed ? "btn-primary" : "btn-outline-primary")"
-                        @onclick="(() => view = ViewMode.Detailed)">
-                    DETAILED
-                </button>
-                <button class="btn btn-sm @(view == ViewMode.Summary ? "btn-primary" : "btn-outline-primary")"
-                        @onclick="(() => view = ViewMode.Summary)">
-                    SUMMARY
-                </button>
-            </div>
         </div>
     </HeaderTemplate>
 
@@ -33,12 +23,9 @@
                                 <th class="col-pos">#</th>
                                 <th>Player</th>
 
-                                @if (view == ViewMode.Detailed)
+                                @for (var r = 1; r <= MaxRound; r++)
                                 {
-                                    @for (var r = 1; r <= MaxRound; r++)
-                                    {
-                                        <th class="text-center">Round @r</th>
-                                    }
+                                    <th class="text-center">Round @r</th>
                                 }
 
                                 <th class="text-end col-total">Total</th>
@@ -57,29 +44,26 @@
                                         @row.Name
                                     </td>
 
-                                    @if (view == ViewMode.Detailed)
+                                    @for (var r = 1; r <= MaxRound; r++)
                                     {
-                                        @for (var r = 1; r <= MaxRound; r++)
-                                        {
-                                            var pts = row.PointsByRound.GetValueOrDefault(r, 0);
-                                            var isWin = row.WinsByRound.TryGetValue(r, out var w) && w;
-                                            var isBye = row.ByeByRound.TryGetValue(r, out var b) && b;
+                                        var pts = row.PointsByRound.GetValueOrDefault(r, 0);
+                                        var isWin = row.WinsByRound.TryGetValue(r, out var w) && w;
+                                        var isBye = row.ByeByRound.TryGetValue(r, out var b) && b;
 
-                                            <td class="text-center font-mono @(isWin && !isBye ? "fw-bold" : null)">
-                                                @if (pts == 0)
-                                                {
-                                                    @pts
-                                                }
-                                                else if (isBye)
-                                                {
-                                                    <span>(@pts)</span>
-                                                }
-                                                else
-                                                {
-                                                    @pts
-                                                }
-                                            </td>
-                                        }
+                                        <td class="text-center font-mono @(isWin && !isBye ? "fw-bold" : null)">
+                                            @if (pts == 0)
+                                            {
+                                                @pts
+                                            }
+                                            else if (isBye)
+                                            {
+                                                <span>(@pts)</span>
+                                            }
+                                            else
+                                            {
+                                                @pts
+                                            }
+                                        </td>
                                     }
 
                                     <td class="text-end">
@@ -107,7 +91,6 @@
 
     // View toggle
     enum ViewMode { Detailed, Summary }
-    ViewMode view = ViewMode.Detailed;
     
     List<RowModel> Rows { get; set; } = [];
     int MaxRound { get; set; }
@@ -122,7 +105,6 @@
                 .ThenByDescending(r => r.Wins)
                 .ThenBy(r => r.Name)
                 .Select((r, i) => { r.Position = i + 1; return r; });
-
 
     void Rebuild()
     {
@@ -151,18 +133,18 @@
 
             if (!isByeMatch)
             {
-                var t1win = m.Team1Points > m.Team2Points;
-                var t2win = m.Team2Points > m.Team1Points;
+                var t1Win = m.Team1Points > m.Team2Points;
+                var t2Win = m.Team2Points > m.Team1Points;
 
                 foreach (var p in m.Team1)
                 {
                     if (!map.TryGetValue(p, out var row)) { row = new RowModel { Name = p.Name, Player = p }; map[p] = row; }
-                    AddRound(row, m.Round, m.Team1Points ?? 0, t1win, isBye: false);
+                    AddRound(row, m.Round, m.Team1Points ?? 0, t1Win, isBye: false);
                 }
                 foreach (var p in m.Team2)
                 {
                     if (!map.TryGetValue(p, out var row)) { row = new RowModel { Name = p.Name, Player = p }; map[p] = row; }
-                    AddRound(row, m.Round, m.Team2Points ?? 0, t2win, isBye: false);
+                    AddRound(row, m.Round, m.Team2Points ?? 0, t2Win, isBye: false);
                 }
             }
             else
