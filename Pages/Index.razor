@@ -50,13 +50,13 @@
                 <CardTitle Class="mb-3 fw-semibold text-warning-emphasis">🎯 Scoring</CardTitle>
 
                 <div class="d-inline-block text-start" style="min-width:320px; max-width:460px;">
-
+@* 
                     <div class="form-check mb-2">
                         <RadioInput Name="ScoringMode"
                                     Label="Play points or games"
                                     @bind-Value="IsPlayPointsOrGames"/>
                     </div>
-
+ *@
                     <div class="d-flex align-items-center gap-2">
                         <div class="form-check m-0">
                             <RadioInput Name="ScoringMode"
@@ -65,7 +65,8 @@
                         </div>
 
                         <InputNumber @bind-Value="Game.ToPoints"
-                                     class="form-control form-control-sm w-auto"
+                                     class="form-control form-control-sm"
+                                     style ="width: 100px"
                                      min="1" max="99"
                                      disabled="@(!IsPlayToPoints)"/>
                         <span>points</span>
