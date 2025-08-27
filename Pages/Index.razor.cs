@@ -192,7 +192,7 @@ public partial class Index
     {
         await base.OnInitializedAsync();
         await EnsureStorageAsync();
-        Game.Players = [new Player("Dominik P", 1), new Player("Hajzen", 2), new Player("Hubert", 3), new Player("Pan Krzysztof", 4),];
+        //Game.Players = [new Player("Dominik P", 1), new Player("Hajzen", 2), new Player("Hubert", 3), new Player("Pan Krzysztof", 4),];
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
