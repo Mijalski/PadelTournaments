@@ -33,11 +33,15 @@ public class Game
 
     public int FinalRound { get; set; } = 0;
 
+    public bool AllowRerolls { get; set; } = false;
+
+    public bool AllowRemovePlayers { get; set; } = false;
+
     public List<RowModel> ComputeFinalRanking()
     {
         var map = new Dictionary<Player, RowModel>();
 
-        foreach (var player in Players)
+        foreach (var player in Players.Where(p => !p.IsRemoved))
         {
             map[player] = new RowModel { Name = player.Name, Player = player };
         }
@@ -52,19 +56,22 @@ public class Game
 
                 foreach (var p in match.Team1)
                 {
-                    AddFinalRoundStat(map[p], match.Round, match.Team1Points ?? 0, t1Win);
+                    if (map.TryGetValue(p, out var row))
+                        AddFinalRoundStat(row, match.Round, match.Team1Points ?? 0, t1Win);
                 }
 
                 foreach (var p in match.Team2)
                 {
-                    AddFinalRoundStat(map[p], match.Round, match.Team2Points ?? 0, t2Win);
+                    if (map.TryGetValue(p, out var row))
+                        AddFinalRoundStat(row, match.Round, match.Team2Points ?? 0, t2Win);
                 }
             }
             else
             {
                 foreach (var p in match.Team1)
                 {
-                    AddFinalRoundStat(map[p], match.Round, match.Team1Points ?? 0, false, true);
+                    if (map.TryGetValue(p, out var row))
+                        AddFinalRoundStat(row, match.Round, match.Team1Points ?? 0, false, true);
                 }
             }
         }

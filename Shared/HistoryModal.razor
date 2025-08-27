@@ -1,5 +1,6 @@
 ﻿@using BlazorBootstrap
 @using PadelTournamentManager.Models.Enums
+@inject IJSRuntime Js
 
 <Modal @ref="_modal" Title="Leaderboard" IsVerticallyCentered="true" Size="ModalSize.Regular">
     <HeaderTemplate>
@@ -41,7 +42,21 @@
                                         {
                                             <span class="me-2" title="Leader">🏆</span>
                                         }
-                                        @row.Name
+
+                                        <span class="@((row.Player.IsRemoved) ? "text-decoration-line-through text-muted" : "")">
+                                            @row.Name
+                                        </span>
+                                        
+                                        @if (Game.AllowRemovePlayers)
+                                        {
+                                            <Button Color="ButtonColor.Link"
+                                                    Size="ButtonSize.Small"
+                                                    Class="ms-2 text-danger"
+                                                    Title="Remove player"
+                                                    @onclick="@(() => ConfirmRemovePlayer(row.Player))">
+                                                <Icon Name="IconName.Trash" />
+                                            </Button>
+                                        }
                                     </td>
 
                                     @for (var r = 1; r <= MaxRound; r++)
@@ -115,17 +130,20 @@
             return;
         }
 
-        var allPlayers = Game.Players?.ToList() ?? new();
+        // Filter out removed players
+        var allPlayers = Game.Players.Where(p => !p.IsRemoved).ToList() ?? new();
         if (!allPlayers.Any())
         {
-            allPlayers = Game.Matches.SelectMany(m => m.Team1.Concat(m.Team2)).Distinct().ToList();
+            allPlayers = Game.Matches
+                .SelectMany(m => m.Team1.Concat(m.Team2))
+                .Distinct()
+                .Where(p => !p.IsRemoved)
+                .ToList();
         }
 
         var map = new Dictionary<Player, RowModel>();
         foreach (var p in allPlayers)
-        {
             map[p] = new RowModel { Name = p.Name, Player = p };
-        }
 
         foreach (var m in Game.Matches)
         {
@@ -138,30 +156,31 @@
 
                 foreach (var p in m.Team1)
                 {
+                    if (p.IsRemoved) continue;
                     if (!map.TryGetValue(p, out var row)) { row = new RowModel { Name = p.Name, Player = p }; map[p] = row; }
                     AddRound(row, m.Round, m.Team1Points ?? 0, t1Win, isBye: false);
                 }
+
                 foreach (var p in m.Team2)
                 {
+                    if (p.IsRemoved) continue;
                     if (!map.TryGetValue(p, out var row)) { row = new RowModel { Name = p.Name, Player = p }; map[p] = row; }
                     AddRound(row, m.Round, m.Team2Points ?? 0, t2Win, isBye: false);
                 }
             }
             else
             {
-                // BYE: only Team1 has the player/points; never a win
                 foreach (var p in m.Team1)
                 {
+                    if (p.IsRemoved) continue;
                     if (!map.TryGetValue(p, out var row)) { row = new RowModel { Name = p.Name, Player = p }; map[p] = row; }
-                    AddRound(row, m.Round, m.Team1Points ?? 0, win:false, isBye:true);
+                    AddRound(row, m.Round, m.Team1Points ?? 0, win: false, isBye: true);
                 }
             }
         }
 
-        // After Rows = map.Values.ToList();
         Rows = map.Values.ToList();
 
-        // Sort using Game.ResultSorting
         if (Game?.ResultSorting == ResultSorting.WinsOverPoints)
         {
             Rows = Rows.OrderByDescending(r => r.Wins)
@@ -175,11 +194,10 @@
                 .ToList();
         }
 
-        // Assign final position numbers
         for (var i = 0; i < Rows.Count; i++)
             Rows[i].Position = i + 1;
-
     }
+
 
     static void AddRound(RowModel row, int round, int pts, bool win, bool isBye)
     {
@@ -190,6 +208,16 @@
         if (win)
         {
             row.Wins += 1;
+        }
+    }
+
+    private async Task ConfirmRemovePlayer(Player p)
+    {
+        var confirmed = await Js.InvokeAsync<bool>("confirm", $"Are you sure you want to remove '{p.Name}'?");
+        if (confirmed)
+        {
+            p.IsRemoved = true;
+            Rebuild();
         }
     }
 }

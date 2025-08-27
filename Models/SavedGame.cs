@@ -33,4 +33,8 @@ public class SavedGame
     public int FinalRound { get; set; }
 
     public string Winner { get; set; } = default!;
+
+    public bool AllowRerolls { get; set; } = false;
+
+    public bool AllowRemovePlayers { get; set; } = false;
 }

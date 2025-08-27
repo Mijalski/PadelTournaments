@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json.Serialization;
 
 namespace PadelTournamentManager.Models;
 
@@ -22,6 +21,8 @@ public class Player
     public string? EditName { get; set; }
 
     public List<Match> MatchHistory = [];
+
+    public bool IsRemoved { get; set; } = false;
 
     public int Points => MatchHistory.Sum(m =>
         m.Team1.Any(p => string.Equals(p.Name, Name, StringComparison.OrdinalIgnoreCase))

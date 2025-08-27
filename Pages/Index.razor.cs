@@ -66,6 +66,28 @@ public partial class Index
         }
     }
 
+    void RerollCurrentRound()
+    {
+        if (!CanReroll)
+            return;
+
+        // Clear current round matches only
+        Game.Matches.RemoveAll(m => m.Round == Game.CurrentRound);
+        foreach (var p in Game.Players)
+            p.MatchHistory.RemoveAll(m => m.Round == Game.CurrentRound);
+
+        // Regenerate using current tournament mode
+        if (Game.TournamentType == TournamentType.Mexicano)
+            GenerateNextRoundMatches(); // your existing method
+    }
+
+    bool CanReroll =>
+        Game.AllowRerolls
+        && Game.CurrentRound != Game.FinalRound
+        && Game.CurrentRound != 0
+        && (Game.TournamentType == TournamentType.Mexicano
+            || Game is { TournamentType: TournamentType.Americano, CurrentRound: <= 3 });
+
     private bool IsPlayPointsOrGames
     {
         get => Game.ScoringType == ScoringType.GamesAndSets; set
@@ -192,7 +214,7 @@ public partial class Index
     {
         await base.OnInitializedAsync();
         await EnsureStorageAsync();
-        Game.Players = [new Player("Dominik P", 1), new Player("Hajzen", 2), new Player("Hubert", 3), new Player("Pan Krzysztof", 4),];
+        //Game.Players = [new Player("Dominik P", 1), new Player("Hajzen", 2), new Player("Hubert", 3), new Player("Pan Krzysztof", 4),];
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -417,7 +439,10 @@ public partial class Index
         }
 
         var skippers = TakeSkippers(cap.skipping);
-        var selected = Game.Players.Where(p => !skippers.Contains(p)).ToList();
+        var selected = Game.Players
+            .Where(p => !skippers.Contains(p) && !p.IsRemoved)
+            .ToList();
+
 
         var mexicanoByScore = Game.TournamentType == TournamentType.Mexicano && Game.CurrentRound > 3;
 
@@ -628,7 +653,7 @@ public partial class Index
             return;
         }
 
-        var ranked = OrderPlayersForFinal(Game.Players).ToList();
+        var ranked = OrderPlayersForFinal(Game.Players.Where(p => !p.IsRemoved)).ToList();
         if (ranked.Count < 4)
         {
             return;
@@ -752,6 +777,8 @@ public partial class Index
             Matches = Game.Matches.ToList(),
             Courts = Game.Courts.ToList(),
             IsFinalRound = Game.IsFinalRound,
+            AllowRemovePlayers = Game.AllowRemovePlayers,
+            AllowRerolls = Game.AllowRerolls,
             FinalRound = Game.FinalRound,
             Winner = Game.ComputeFinalRanking().FirstOrDefault()?.Player.Name ?? string.Empty
         };
@@ -943,7 +970,7 @@ public partial class Index
     {
         EnsureSkipQueueUpToDate();
 
-        var present = Game.Players.ToHashSet();
+        var present = Game.Players.Where(x => !x.IsRemoved).ToHashSet();
         var picked = new List<Player>(Math.Max(0, count));
 
         // We limit iterations to safety bound

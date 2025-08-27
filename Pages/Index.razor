@@ -50,7 +50,7 @@
                 <CardTitle Class="mb-3 fw-semibold text-warning-emphasis">🎯 Scoring</CardTitle>
 
                 <div class="d-inline-block text-start" style="min-width:320px; max-width:460px;">
-@* 
+                    @* 
                     <div class="form-check mb-2">
                         <RadioInput Name="ScoringMode"
                                     Label="Play points or games"
@@ -71,7 +71,19 @@
                                      disabled="@(!IsPlayToPoints)"/>
                         <span>points</span>
                     </div>
+                    
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="form-check mb-2 text-start">
+                            <CheckboxInput @bind-Value="Game.AllowRerolls" Label="Allow rerolls" />
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="form-check mb-2 text-start">
+                            <CheckboxInput @bind-Value="Game.AllowRemovePlayers" Label="Allow player removal" />
+                        </div>
+                    </div>
                 </div>
+                
             </CardBody>
         </Card>
     </div>
@@ -360,6 +372,13 @@
         <Button Color="ButtonColor.Secondary" @onclick="OpenHistory">📜 Leaderboard</Button>
     }
 
+    @if (CanReroll)
+    {
+        <Button Color="ButtonColor.Dark" @onclick="RerollCurrentRound">
+            🎲 Reroll Matches
+        </Button>
+    }
+
     @if (Game.CurrentRound != Game.FinalRound || Game.FinalRound == 0)
     {
         <Button Color="ButtonColor.Primary"
@@ -368,6 +387,7 @@
             ▶ @(Game.CurrentRound == 0 ? "Play" : "Next")
         </Button>
     }
+    
 
     @if (Game.CurrentRound > 0 && Game.CurrentRound != Game.FinalRound)
     {
